@@ -1,0 +1,35 @@
+{
+    "name": "etechflow/module-advanced-product-reviews",
+    "description": "Advanced Product Reviews for Magento 2 — rich reviews with images & video, pros/cons, helpful voting, verified-buyer filters, review summaries, admin replies, Q&A, review reminders with auto-generated coupons, and headless (REST/GraphQL) support.",
+    "type": "magento2-module",
+    "license": [
+        "OSL-3.0",
+        "AFL-3.0"
+    ],
+    "authors": [
+        {
+            "name": "ETechFlow",
+            "email": "etechflow0@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "~8.1.0||~8.2.0||~8.3.0",
+        "magento/framework": ">=103.0.0",
+        "magento/module-review": ">=100.4.0",
+        "magento/module-catalog": ">=104.0.0",
+        "magento/module-customer": ">=103.0.0",
+        "magento/module-sales": ">=103.0.0",
+        "magento/module-sales-rule": ">=101.2.0",
+        "magento/module-store": ">=101.1.0",
+        "magento/module-ui": ">=101.2.0"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "ETechFlow\\AdvancedProductReviews\\": ""
+        }
+    },
+    "version": "1.0.0"
+}

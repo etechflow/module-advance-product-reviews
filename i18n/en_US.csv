@@ -1,0 +1,186 @@
+"""model"" value should be specified.","""model"" value should be specified."
+"%1 comment(s) were updated.","%1 comment(s) were updated."
+"%1 question(s) were updated.","%1 question(s) were updated."
+"%1 review(s)","%1 review(s)"
+"A valid ""review_id"" is required.","A valid ""review_id"" is required."
+"Add a comment…","Add a comment…"
+"Add photos or videos","Add photos or videos"
+"Add photos","Add photos"
+"Add videos","Add videos"
+"Advanced Product Reviews","Advanced Product Reviews"
+"Allow Guest Comments","Allow Guest Comments"
+"Allow Guest Reviews","Allow Guest Reviews"
+"Allow Image Uploads","Allow Image Uploads"
+"Allow Video Uploads","Allow Video Uploads"
+"Allowed Video Extensions","Allowed Video Extensions"
+"Approve Comments","Approve Comments"
+"Approve Questions","Approve Questions"
+"Approve selected comments?","Approve selected comments?"
+"Approve selected questions?","Approve selected questions?"
+"As a thank you, here is a discount code for your next order:","As a thank you, here is a discount code for your next order:"
+"Ask a Question","Ask a Question"
+"Asked by %1","Asked by %1"
+"Attach Discount Coupon","Attach Discount Coupon"
+"Auto-Approve New Reviews","Auto-Approve New Reviews"
+"Auto-generate a coupon code to incentivise a return visit.","Auto-generate a coupon code to incentivise a return visit."
+"Avg. Rating","Avg. Rating"
+"By %1","By %1"
+"Cart Price Rule ID (for coupons)","Cart Price Rule ID (for coupons)"
+"Claude API Key","Claude API Key"
+"Claude API key is not configured.","Claude API key is not configured."
+"Claude Model","Claude Model"
+"Comma-separated, e.g. mp4,webm,mov","Comma-separated, e.g. mp4,webm,mov"
+"Comments are disabled.","Comments are disabled."
+"Could not delete the review extra data: %1","Could not delete the review extra data: %1"
+"Could not reach the translation service.","Could not reach the translation service."
+"Could not record your vote.","Could not record your vote."
+"Could not save the review extra data: %1","Could not save the review extra data: %1"
+"Could not save the uploaded file.","Could not save the uploaded file."
+"Could not save your comment.","Could not save your comment."
+"Could not submit your question.","Could not submit your question."
+"Could not translate this review.","Could not translate this review."
+"Days after order completion to send the reminder.","Days after order completion to send the reminder."
+"Delete Comments","Delete Comments"
+"Delete Questions","Delete Questions"
+"Delete selected comments? This cannot be undone.","Delete selected comments? This cannot be undone."
+"Delete selected questions? This cannot be undone.","Delete selected questions? This cannot be undone."
+"Email Template","Email Template"
+"Enable ""Recommend this product""","Enable ""Recommend this product"""
+"Enable ""Was this helpful?"" Voting","Enable ""Was this helpful?"" Voting"
+"Enable Auto-Translation","Enable Auto-Translation"
+"Enable Comments on Reviews","Enable Comments on Reviews"
+"Enable Extension","Enable Extension"
+"Enable Invisible CAPTCHA","Enable Invisible CAPTCHA"
+"Enable Product Questions & Answers","Enable Product Questions & Answers"
+"Enable Pros & Cons","Enable Pros & Cons"
+"Enable Review Reminders","Enable Review Reminders"
+"File is too large. Maximum allowed size is %1 MB.","File is too large. Maximum allowed size is %1 MB."
+"Hi %customer_name,","Hi %customer_name,"
+"Highest Rated","Highest Rated"
+"How was your recent purchase? Leave a review","How was your recent purchase? Leave a review"
+"I recommend this product","I recommend this product"
+"ID of a Cart Price Rule configured with ""Specific Coupon"" + ""Auto generation"".","ID of a Cart Price Rule configured with ""Specific Coupon"" + ""Auto generation""."
+"If No, reviews require admin approval before appearing.","If No, reviews require admin approval before appearing."
+"If No, translations are generated on demand when a shopper clicks ""Translate"".","If No, translations are generated on demand when a shopper clicks ""Translate""."
+"Invalid review.","Invalid review."
+"Max Image Size (MB)","Max Image Size (MB)"
+"Max Images per Review","Max Images per Review"
+"Max Video Size (MB)","Max Video Size (MB)"
+"Media (Photos & Videos)","Media (Photos & Videos)"
+"Most Helpful","Most Helpful"
+"Most Recent","Most Recent"
+"Most Reviewed Products","Most Reviewed Products"
+"Multilingual Auto-Translation (Claude AI)","Multilingual Auto-Translation (Claude AI)"
+"New feature: automatically translate reviews into the storefront language using the Claude API.","New feature: automatically translate reviews into the storefront language using the Claude API."
+"New feature: customers can attach short video reviews.","New feature: customers can attach short video reviews."
+"No product found with SKU ""%1"".","No product found with SKU ""%1""."
+"No questions yet. Be the first to ask!","No questions yet. Be the first to ask!"
+"No reviews yet.","No reviews yet."
+"No translation was produced.","No translation was produced."
+"One per line","One per line"
+"Order ID","Order ID"
+"Pending Approval","Pending Approval"
+"Play video review","Play video review"
+"Please enter a comment.","Please enter a comment."
+"Please enter your question.","Please enter your question."
+"Please provide ""review_id"" and ""language"".","Please provide ""review_id"" and ""language""."
+"Please provide ""review_id"" and a ""comment"".","Please provide ""review_id"" and a ""comment""."
+"Please sign in to leave a comment.","Please sign in to leave a comment."
+"Product #%1","Product #%1"
+"Product Questions (Q&A)","Product Questions (Q&A)"
+"Protects review/comment/question submission from bots.","Protects review/comment/question submission from bots."
+"Provide either ""sku"" or ""productId"".","Provide either ""sku"" or ""productId""."
+"Questions & Answers","Questions & Answers"
+"Questions are disabled.","Questions are disabled."
+"Rating Distribution","Rating Distribution"
+"Reject Comments","Reject Comments"
+"Reject Questions","Reject Questions"
+"Reject selected comments?","Reject selected comments?"
+"Reject selected questions?","Reject selected questions?"
+"Review Comments","Review Comments"
+"Review Elements","Review Elements"
+"Review ID","Review ID"
+"Review Reminder Emails","Review Reminder Emails"
+"Review Reminders","Review Reminders"
+"Review extra data with id ""%1"" does not exist.","Review extra data with id ""%1"" does not exist."
+"Review photo","Review photo"
+"Reviews Analytics Dashboard","Reviews Analytics Dashboard"
+"Reviews Over Time (12 months)","Reviews Over Time (12 months)"
+"Reviews per month","Reviews per month"
+"Send After (days)","Send After (days)"
+"Show original","Show original"
+"Spam Protection","Spam Protection"
+"Store Reply","Store Reply"
+"Stored encrypted. Get a key from console.anthropic.com.","Stored encrypted. Get a key from console.anthropic.com."
+"Submit Question","Submit Question"
+"Thank you for shopping with %store_name. We'd love to hear what you think about your recent purchase — your feedback helps other shoppers and helps us improve.","Thank you for shopping with %store_name. We'd love to hear what you think about your recent purchase — your feedback helps other shoppers and helps us improve."
+"Thank you! Your comment is awaiting moderation.","Thank you! Your comment is awaiting moderation."
+"Thank you! Your question is awaiting moderation.","Thank you! Your question is awaiting moderation."
+"Thanks for your feedback.","Thanks for your feedback."
+"The translation could not be understood.","The translation could not be understood."
+"The translation service returned an error (%1).","The translation service returned an error (%1)."
+"The translation service returned an invalid response.","The translation service returned an invalid response."
+"The translation service returned no text.","The translation service returned no text."
+"The uploaded file is not a valid %1 (detected: %2).","The uploaded file is not a valid %1 (detected: %2)."
+"There is nothing to translate.","There is nothing to translate."
+"This review is already in your language.","This review is already in your language."
+"Total Reviews","Total Reviews"
+"Translate Automatically","Translate Automatically"
+"Translation failed. Please try again.","Translation failed. Please try again."
+"Translation failed.","Translation failed."
+"Translation is not enabled.","Translation is not enabled."
+"Translation ready.","Translation ready."
+"Type your question about this product…","Type your question about this product…"
+"Unsupported file type "".%1"". Allowed: images and %2.","Unsupported file type "".%1"". Allowed: images and %2."
+"Verified Buyer","Verified Buyer"
+"Verified Buyers","Verified Buyers"
+"Video Reviews","Video Reviews"
+"Video uploads are disabled.","Video uploads are disabled."
+"Was this helpful?","Was this helpful?"
+"With Photos/Videos","With Photos/Videos"
+"Would Recommend","Would Recommend"
+"Write your review","Write your review"
+"You have already voted on this review.","You have already voted on this review."
+"Your comment has been posted.","Your comment has been posted."
+"Your name","Your name"
+"Your question has been posted.","Your question has been posted."
+"e.g. claude-haiku-4-5-20251001 (fast, low cost) or a Sonnet model (higher quality).","e.g. claude-haiku-4-5-20251001 (fast, low cost) or a Sonnet model (higher quality)."
+"out of 5","out of 5"
+"would recommend","would recommend"
+All,All
+Approve,Approve
+Approved,Approved
+Author,Author
+Close,Close
+Comment,Comment
+Configuration,Configuration
+Cons,Cons
+Coupon,Coupon
+Created,Created
+Delete,Delete
+Dictionary successfully processed.
+ETechFlow,ETechFlow
+Email,Email
+General,General
+Guest,Guest
+Helpful,Helpful
+ID,ID
+Pending,Pending
+Post,Post
+Product,Product
+Pros,Pros
+Question,Question
+Recommended,Recommended
+Recommends,Recommends
+Reject,Reject
+Rejected,Rejected
+Review,Review
+Reviews,Reviews
+Scheduled,Scheduled
+Sent,Sent
+Status,Status
+Step,Step
+Store,Store
+Translate,Translate
+Translating…,Translating…
+there,there

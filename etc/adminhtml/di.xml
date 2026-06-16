@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — admin-scope DI (currently empty)
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ *
+ * v1.0.1 fix: grid CollectionFactory entries previously lived here, but
+ * Magento's per-area DI compile (adminhtml.php) treats array contributions
+ * from area-scoped di.xml files as REPLACEMENTS, not merges. Moving them
+ * to etc/di.xml (global) restored merging with all other modules.
+ *
+ * File kept as a placeholder; safe to delete entirely if no admin-only
+ * DI overrides are ever needed.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+</config>

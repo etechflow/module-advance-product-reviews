@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — admin menu
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <!-- Top-level group under Content -->
+        <add id="ETechFlow_AdvancedProductReviews::reviews"
+             title="Advanced Product Reviews"
+             translate="title"
+             module="ETechFlow_AdvancedProductReviews"
+             sortOrder="80"
+             parent="Magento_Backend::content"
+             resource="ETechFlow_AdvancedProductReviews::reviews"/>
+
+        <add id="ETechFlow_AdvancedProductReviews::analytics"
+             title="Reviews Analytics Dashboard"
+             translate="title"
+             module="ETechFlow_AdvancedProductReviews"
+             sortOrder="10"
+             parent="ETechFlow_AdvancedProductReviews::reviews"
+             action="etechflow_reviews/analytics/index"
+             resource="ETechFlow_AdvancedProductReviews::analytics"/>
+
+        <add id="ETechFlow_AdvancedProductReviews::comments"
+             title="Review Comments"
+             translate="title"
+             module="ETechFlow_AdvancedProductReviews"
+             sortOrder="20"
+             parent="ETechFlow_AdvancedProductReviews::reviews"
+             action="etechflow_reviews/comment/index"
+             resource="ETechFlow_AdvancedProductReviews::comments"/>
+
+        <add id="ETechFlow_AdvancedProductReviews::questions"
+             title="Product Questions (Q&amp;A)"
+             translate="title"
+             module="ETechFlow_AdvancedProductReviews"
+             sortOrder="30"
+             parent="ETechFlow_AdvancedProductReviews::reviews"
+             action="etechflow_reviews/question/index"
+             resource="ETechFlow_AdvancedProductReviews::questions"/>
+
+        <add id="ETechFlow_AdvancedProductReviews::reminders"
+             title="Review Reminders"
+             translate="title"
+             module="ETechFlow_AdvancedProductReviews"
+             sortOrder="40"
+             parent="ETechFlow_AdvancedProductReviews::reviews"
+             action="etechflow_reviews/reminder/index"
+             resource="ETechFlow_AdvancedProductReviews::reminders"/>
+
+        <!-- Direct link to configuration -->
+        <add id="ETechFlow_AdvancedProductReviews::config_link"
+             title="Configuration"
+             translate="title"
+             module="ETechFlow_AdvancedProductReviews"
+             sortOrder="50"
+             parent="ETechFlow_AdvancedProductReviews::reviews"
+             action="adminhtml/system_config/edit/section/etechflow_reviews"
+             resource="ETechFlow_AdvancedProductReviews::config"/>
+    </menu>
+</config>

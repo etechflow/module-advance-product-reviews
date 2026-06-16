@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — default configuration
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <etechflow_reviews>
+            <license>
+                <production_environment>1</production_environment>
+                <license_key/>
+                <issued_key/>
+                <issued_at>0</issued_at>
+                <ip_blocked>0</ip_blocked>
+                <portal_url>https://YOUR-LICENSE-PORTAL.example.com/license/validate</portal_url>
+            </license>
+            <payment>
+                <stripe_secret_key/>
+                <stripe_publishable_key/>
+                <stripe_currency>usd</stripe_currency>
+            </payment>
+            <general>
+                <enabled>1</enabled>
+                <allow_guest_reviews>1</allow_guest_reviews>
+                <auto_approve>0</auto_approve>
+            </general>
+            <elements>
+                <enable_pros_cons>1</enable_pros_cons>
+                <enable_recommend>1</enable_recommend>
+                <enable_helpful>1</enable_helpful>
+                <enable_comments>1</enable_comments>
+                <allow_guest_comments>0</allow_guest_comments>
+                <enable_qa>1</enable_qa>
+            </elements>
+            <media>
+                <enable_images>1</enable_images>
+                <enable_videos>1</enable_videos>
+                <max_images>5</max_images>
+                <max_image_size_mb>5</max_image_size_mb>
+                <max_video_size_mb>50</max_video_size_mb>
+                <allowed_video_types>mp4,webm,mov</allowed_video_types>
+            </media>
+            <translation>
+                <enabled>0</enabled>
+                <claude_model>claude-haiku-4-5-20251001</claude_model>
+                <auto_translate>1</auto_translate>
+            </translation>
+            <spam>
+                <captcha_enabled>1</captcha_enabled>
+            </spam>
+            <reminder>
+                <enabled>0</enabled>
+                <delay_days>7</delay_days>
+                <coupon_enabled>0</coupon_enabled>
+            </reminder>
+        </etechflow_reviews>
+    </default>
+</config>

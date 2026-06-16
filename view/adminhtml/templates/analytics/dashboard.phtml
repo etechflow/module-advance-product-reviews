@@ -1,0 +1,138 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — Review Analytics Dashboard
+ *
+ * @var \ETechFlow\AdvancedProductReviews\Block\Adminhtml\Analytics\Dashboard $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+$kpis = $block->getKpis();
+$topProducts = $block->getTopProducts();
+$distributionJson = $block->getRatingDistributionJson();
+$trendJson = $block->getTrendJson();
+
+$cards = [
+    ['label' => __('Total Reviews'), 'value' => $kpis['total'], 'mod' => 'total'],
+    ['label' => __('Avg. Rating'), 'value' => number_format((float) $kpis['avg_rating'], 2) . ' ★', 'mod' => 'rating'],
+    ['label' => __('Pending Approval'), 'value' => $kpis['pending'], 'mod' => 'pending'],
+    ['label' => __('Approved'), 'value' => $kpis['approved'], 'mod' => 'approved'],
+    ['label' => __('Would Recommend'), 'value' => $kpis['recommend_rate'] . '%', 'mod' => 'recommend'],
+    ['label' => __('Verified Buyers'), 'value' => $kpis['verified_rate'] . '%', 'mod' => 'verified'],
+    ['label' => __('With Photos/Videos'), 'value' => $kpis['with_media'], 'mod' => 'media'],
+    ['label' => __('Video Reviews'), 'value' => $kpis['video_count'], 'mod' => 'video'],
+];
+
+// Max for distribution bar scaling.
+$dist = $block->getDashboardData()['rating_distribution'];
+$distMax = max(1, max($dist));
+?>
+<div class="etf-analytics">
+
+    <!-- ===================== KPI CARDS ===================== -->
+    <div class="etf-kpi-grid">
+        <?php foreach ($cards as $card): ?>
+            <div class="etf-kpi-card etf-kpi-<?= $escaper->escapeHtmlAttr($card['mod']) ?>">
+                <span class="etf-kpi-value"><?= $escaper->escapeHtml((string) $card['value']) ?></span>
+                <span class="etf-kpi-label"><?= $escaper->escapeHtml((string) $card['label']) ?></span>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <div class="etf-analytics-row">
+        <!-- ===================== RATING DISTRIBUTION ===================== -->
+        <section class="etf-panel">
+            <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Rating Distribution')) ?></h2>
+            <div class="etf-bars">
+                <?php for ($star = 5; $star >= 1; $star--): ?>
+                    <?php $count = (int) ($dist[$star] ?? 0); ?>
+                    <?php $pct = (int) round(($count / $distMax) * 100); ?>
+                    <div class="etf-bar-row">
+                        <span class="etf-bar-label"><?= (int) $star ?> ★</span>
+                        <span class="etf-bar-track">
+                            <span class="etf-bar-fill" style="width: <?= (int) $pct ?>%;"></span>
+                        </span>
+                        <span class="etf-bar-count"><?= (int) $count ?></span>
+                    </div>
+                <?php endfor; ?>
+            </div>
+        </section>
+
+        <!-- ===================== MONTHLY TREND ===================== -->
+        <section class="etf-panel">
+            <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Reviews Over Time (12 months)')) ?></h2>
+            <div class="etf-trend" data-role="etf-trend"
+                 data-trend="<?= $escaper->escapeHtmlAttr($trendJson) ?>">
+                <svg class="etf-trend-svg" viewBox="0 0 600 200" preserveAspectRatio="none"
+                     role="img" aria-label="<?= $escaper->escapeHtmlAttr(__('Reviews per month')) ?>"></svg>
+                <div class="etf-trend-axis" data-role="etf-trend-axis"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===================== TOP PRODUCTS ===================== -->
+    <section class="etf-panel">
+        <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Most Reviewed Products')) ?></h2>
+        <?php if (empty($topProducts)): ?>
+            <p class="etf-empty"><?= $escaper->escapeHtml(__('No reviews yet.')) ?></p>
+        <?php else: ?>
+            <table class="data-grid etf-top-table">
+                <thead>
+                    <tr>
+                        <th><?= $escaper->escapeHtml(__('Product')) ?></th>
+                        <th class="etf-num"><?= $escaper->escapeHtml(__('Reviews')) ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($topProducts as $row): ?>
+                        <tr>
+                            <td><?= $escaper->escapeHtml($row['name']) ?></td>
+                            <td class="etf-num"><?= (int) $row['count'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </section>
+</div>
+
+<script>
+    require(['jquery'], function ($) {
+        'use strict';
+        var $wrap = $('[data-role=etf-trend]');
+        if (!$wrap.length) { return; }
+
+        var data = $wrap.data('trend') || [];
+        if (!data.length) { return; }
+
+        var W = 600, H = 200, padX = 10, padY = 20;
+        var counts = data.map(function (d) { return d.count; });
+        var maxVal = Math.max.apply(null, counts.concat([1]));
+        var stepX = (W - padX * 2) / Math.max(1, data.length - 1);
+
+        var points = data.map(function (d, i) {
+            var x = padX + i * stepX;
+            var y = H - padY - (d.count / maxVal) * (H - padY * 2);
+            return {x: x, y: y, d: d};
+        });
+
+        var line = points.map(function (p) { return p.x + ',' + p.y; }).join(' ');
+        var area = padX + ',' + (H - padY) + ' ' + line + ' ' + (padX + (data.length - 1) * stepX) + ',' + (H - padY);
+
+        var svg = '';
+        svg += '<polygon class="etf-trend-area" points="' + area + '"/>';
+        svg += '<polyline class="etf-trend-line" points="' + line + '"/>';
+        points.forEach(function (p) {
+            svg += '<circle class="etf-trend-dot" cx="' + p.x + '" cy="' + p.y + '" r="3"><title>'
+                + p.d.label + ': ' + p.d.count + '</title></circle>';
+        });
+        $wrap.find('.etf-trend-svg').html(svg);
+
+        // Sparse x-axis labels (first, middle, last).
+        var axis = '';
+        [0, Math.floor(data.length / 2), data.length - 1].forEach(function (i) {
+            axis += '<span>' + data[i].label + '</span>';
+        });
+        $wrap.find('[data-role=etf-trend-axis]').html(axis);
+    });
+</script>

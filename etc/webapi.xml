@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — REST API routes
+ *
+ * Public (anonymous) read endpoints expose a product's review summary and a
+ * review's extra data for headless storefronts. Admin-protected endpoints allow
+ * managing extra data (e.g. integrations / data sync).
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+
+    <!-- ===== Review summary (public read) ===== -->
+    <route url="/V1/etechflow-reviews/summary/product/:productId" method="GET">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewSummaryManagementInterface" method="getSummary"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/etechflow-reviews/summary/sku/:sku" method="GET">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewSummaryManagementInterface" method="getSummaryBySku"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- ===== Review extra data (public read) ===== -->
+    <route url="/V1/etechflow-reviews/extra/review/:reviewId" method="GET">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface" method="getByReviewId"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/etechflow-reviews/extra/:extraId" method="GET">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface" method="getById"/>
+        <resources>
+            <resource ref="ETechFlow_AdvancedProductReviews::reviews"/>
+        </resources>
+    </route>
+
+    <!-- ===== Review extra data (admin manage) ===== -->
+    <route url="/V1/etechflow-reviews/extra/search" method="GET">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="ETechFlow_AdvancedProductReviews::reviews"/>
+        </resources>
+    </route>
+    <route url="/V1/etechflow-reviews/extra" method="POST">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface" method="save"/>
+        <resources>
+            <resource ref="ETechFlow_AdvancedProductReviews::reviews"/>
+        </resources>
+    </route>
+    <route url="/V1/etechflow-reviews/extra/:extraId" method="DELETE">
+        <service class="ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface" method="deleteById"/>
+        <resources>
+            <resource ref="ETechFlow_AdvancedProductReviews::reviews"/>
+        </resources>
+    </route>
+</routes>

@@ -1,0 +1,72 @@
+/**
+ * ETechFlow_AdvancedProductReviews — analytics dashboard styling
+ *
+ * Dependency-free: KPI cards, CSS bar charts and an inline-SVG trend line.
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+.etf-analytics { margin-top: 12px; }
+
+/* KPI cards */
+.etf-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.etf-kpi-card {
+    background: #fff;
+    border: 1px solid #e3e3e3;
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+    border-top: 3px solid #007bdb;
+}
+.etf-kpi-rating { border-top-color: #f5a623; }
+.etf-kpi-pending { border-top-color: #e8a33d; }
+.etf-kpi-approved { border-top-color: #79a22e; }
+.etf-kpi-recommend { border-top-color: #2fa44f; }
+.etf-kpi-verified { border-top-color: #0a7cb0; }
+.etf-kpi-video { border-top-color: #8e44ad; }
+.etf-kpi-value { font-size: 2.6rem; font-weight: 700; color: #41362f; line-height: 1.1; }
+.etf-kpi-label { margin-top: 6px; font-size: 1.25rem; color: #777; }
+
+/* Panels */
+.etf-analytics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+@media (max-width: 1100px) { .etf-analytics-row { grid-template-columns: 1fr; } }
+.etf-panel {
+    background: #fff;
+    border: 1px solid #e3e3e3;
+    border-radius: 8px;
+    padding: 18px 20px;
+}
+.etf-panel-title { margin: 0 0 16px; font-size: 1.6rem; color: #41362f; }
+.etf-empty { color: #777; }
+
+/* Rating distribution bars */
+.etf-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.etf-bar-label { width: 34px; font-weight: 600; color: #555; white-space: nowrap; }
+.etf-bar-track { flex: 1; height: 16px; background: #f0f0f0; border-radius: 8px; overflow: hidden; }
+.etf-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, #f5a623, #f7b733); border-radius: 8px; }
+.etf-bar-count { width: 40px; text-align: right; color: #555; font-variant-numeric: tabular-nums; }
+
+/* Trend line */
+.etf-trend { position: relative; }
+.etf-trend-svg { width: 100%; height: 200px; overflow: visible; }
+.etf-trend-area { fill: rgba(0, 123, 219, .10); stroke: none; }
+.etf-trend-line { fill: none; stroke: #007bdb; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.etf-trend-dot { fill: #007bdb; }
+.etf-trend-axis { display: flex; justify-content: space-between; margin-top: 6px; color: #999; font-size: 1.1rem; }
+
+/* Top products table */
+.etf-top-table { width: 100%; border-collapse: collapse; }
+.etf-top-table th, .etf-top-table td { padding: 9px 12px; border-bottom: 1px solid #eee; text-align: left; }
+.etf-top-table .etf-num { text-align: right; font-variant-numeric: tabular-nums; }

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — email templates
+ *
+ * The template id MUST equal the system.xml config path of the
+ * email-template select field with "/" replaced by "_":
+ *   path  etechflow_reviews/reminder/email_template
+ *   id    etechflow_reviews_reminder_email_template
+ * Otherwise Magento\Config\Model\Config\Source\Email\Template throws
+ * UnexpectedTemplateIdValueException when rendering the config page.
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Email:etc/email_templates.xsd">
+    <template id="etechflow_reviews_reminder_email_template"
+              label="Advanced Product Reviews: Review Reminder"
+              file="review_reminder.html"
+              type="html"
+              module="ETechFlow_AdvancedProductReviews"
+              area="frontend"/>
+</config>

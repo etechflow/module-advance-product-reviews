@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — global event observers
+ *
+ * Order state changes can happen in any area (admin, cron, API), so the
+ * reminder scheduler is registered globally rather than under etc/frontend.
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_order_save_after">
+        <observer name="etechflow_schedule_review_reminder"
+                  instance="ETechFlow\AdvancedProductReviews\Observer\ScheduleReminder"/>
+    </event>
+</config>

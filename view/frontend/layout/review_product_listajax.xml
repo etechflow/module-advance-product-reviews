@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — enhance the AJAX-loaded review list
+ *
+ * Overrides the core list template to add media galleries, pros/cons,
+ * verified/recommended badges, "was this helpful?" voting and comments.
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/layout_generic.xsd">
+    <referenceBlock name="product.info.product_additional_data">
+        <arguments>
+            <argument name="etf_view_model" xsi:type="object">
+                ETechFlow\AdvancedProductReviews\ViewModel\ReviewData
+            </argument>
+        </arguments>
+        <action method="setTemplate">
+            <argument name="template" xsi:type="string">
+                ETechFlow_AdvancedProductReviews::product/view/list.phtml
+            </argument>
+        </action>
+    </referenceBlock>
+</layout>

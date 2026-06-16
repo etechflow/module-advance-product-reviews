@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — storefront product page wiring
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="ETechFlow_AdvancedProductReviews::css/reviews.css"/>
+    </head>
+    <body>
+        <!-- Inject our extra fields (pros/cons, recommend, photo/video) into the review form -->
+        <referenceContainer name="product.review.form.fields.before">
+            <block class="Magento\Framework\View\Element\Template"
+                   name="etechflow.review.form.fields"
+                   template="ETechFlow_AdvancedProductReviews::review/form-fields.phtml"
+                   ifconfig="etechflow_reviews/general/enabled">
+                <arguments>
+                    <argument name="etf_view_model" xsi:type="object">
+                        ETechFlow\AdvancedProductReviews\ViewModel\ReviewData
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+
+        <!-- Add a Questions & Answers tab to the product details -->
+        <referenceBlock name="product.info.details">
+            <block class="Magento\Framework\View\Element\Template"
+                   name="etechflow.qa.tab"
+                   as="etechflow_qa"
+                   group="detailed_info"
+                   template="ETechFlow_AdvancedProductReviews::qa/list.phtml"
+                   ifconfig="etechflow_reviews/elements/enable_qa">
+                <arguments>
+                    <argument name="title" translate="true" xsi:type="string">Questions &amp; Answers</argument>
+                    <argument name="sort_order" xsi:type="string">40</argument>
+                    <argument name="etf_view_model" xsi:type="object">
+                        ETechFlow\AdvancedProductReviews\ViewModel\ReviewData
+                    </argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>

@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — system configuration
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="etechflow" translate="label" sortOrder="400">
+            <label>ETechFlow</label>
+        </tab>
+
+        <section id="etechflow_reviews" translate="label" type="text" sortOrder="10"
+                 showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Advanced Product Reviews</label>
+            <tab>etechflow</tab>
+            <resource>ETechFlow_AdvancedProductReviews::config</resource>
+
+            <!-- ===================== LICENSE ===================== -->
+            <group id="license" translate="label" type="text" sortOrder="5"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>License</label>
+                <field id="license_key" translate="label comment" type="text" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Key</label>
+                    <comment><![CDATA[Paste your eTechFlow SP-XXXX subscription key. Generated automatically after checkout. Bundle key also accepted. Get one at <a href="https://etechflow.com" target="_blank">etechflow.com</a>]]></comment>
+                </field>
+                <field id="issued_key" translate="label comment" type="obscure" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Issued Key (auto)</label>
+                    <comment><![CDATA[Set automatically on first successful validation. Used to restore the key after an IP-block event. Do not edit.]]></comment>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="portal_url" translate="label comment" type="text" sortOrder="25"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Portal URL</label>
+                    <comment><![CDATA[eTechFlow licensing portal endpoint. Update if your portal URL changes.]]></comment>
+                </field>
+                <field id="bundle_license_key" translate="label comment" type="obscure" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Bundle License Key</label>
+                    <comment><![CDATA[Shared key that activates every eTechFlow module on this host. Set EITHER this OR the per-module key above.]]></comment>
+                    <config_path>etechflow_bundle/license/license_key</config_path>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+</group>
+
+<!-- ===================== GENERAL ===================== -->
+            <group id="general" translate="label" type="text" sortOrder="10"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Extension</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="allow_guest_reviews" translate="label" type="select" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Guest Reviews</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="auto_approve" translate="label comment" type="select" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Auto-Approve New Reviews</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If No, reviews require admin approval before appearing.</comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+            </group>
+
+            <!-- ===================== ELEMENTS ===================== -->
+            <group id="elements" translate="label" type="text" sortOrder="20"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Review Elements</label>
+                <field id="enable_pros_cons" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Pros &amp; Cons</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_recommend" translate="label" type="select" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable "Recommend this product"</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_helpful" translate="label" type="select" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable "Was this helpful?" Voting</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_comments" translate="label" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Comments on Reviews</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="allow_guest_comments" translate="label" type="select" sortOrder="50"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Guest Comments</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends><field id="enable_comments">1</field></depends>
+                </field>
+                <field id="enable_qa" translate="label" type="select" sortOrder="60"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Product Questions &amp; Answers</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+
+            <!-- ===================== MEDIA ===================== -->
+            <group id="media" translate="label" type="text" sortOrder="30"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Media (Photos &amp; Videos)</label>
+                <field id="enable_images" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Image Uploads</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_videos" translate="label comment" type="select" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Video Uploads</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>New feature: customers can attach short video reviews.</comment>
+                </field>
+                <field id="max_images" translate="label" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Images per Review</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <depends><field id="enable_images">1</field></depends>
+                </field>
+                <field id="max_image_size_mb" translate="label" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Image Size (MB)</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <depends><field id="enable_images">1</field></depends>
+                </field>
+                <field id="max_video_size_mb" translate="label" type="text" sortOrder="50"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Video Size (MB)</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <depends><field id="enable_videos">1</field></depends>
+                </field>
+                <field id="allowed_video_types" translate="label comment" type="text" sortOrder="60"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allowed Video Extensions</label>
+                    <comment>Comma-separated, e.g. mp4,webm,mov</comment>
+                    <depends><field id="enable_videos">1</field></depends>
+                </field>
+            </group>
+
+            <!-- ============ MULTILINGUAL AUTO-TRANSLATION (Claude) ============ -->
+            <group id="translation" translate="label comment" type="text" sortOrder="40"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Multilingual Auto-Translation (Claude AI)</label>
+                <comment>New feature: automatically translate reviews into the storefront language using the Claude API.</comment>
+                <field id="enabled" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Auto-Translation</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="claude_api_key" translate="label comment" type="obscure" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Claude API Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Stored encrypted. Get a key from console.anthropic.com.</comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="claude_model" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Claude Model</label>
+                    <comment>e.g. claude-haiku-4-5-20251001 (fast, low cost) or a Sonnet model (higher quality).</comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="auto_translate" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Translate Automatically</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If No, translations are generated on demand when a shopper clicks "Translate".</comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+            </group>
+
+            <!-- ===================== SPAM ===================== -->
+            <group id="spam" translate="label" type="text" sortOrder="50"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Spam Protection</label>
+                <field id="captcha_enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Invisible CAPTCHA</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Protects review/comment/question submission from bots.</comment>
+                </field>
+            </group>
+
+            <!-- ===================== REMINDERS ===================== -->
+            <group id="reminder" translate="label" type="text" sortOrder="60"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Review Reminder Emails</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Review Reminders</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="delay_days" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Send After (days)</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Days after order completion to send the reminder.</comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="email_template" translate="label" type="select" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Email Template</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="coupon_enabled" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Attach Discount Coupon</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Auto-generate a coupon code to incentivise a return visit.</comment>
+                    <depends><field id="enabled">1</field></depends>
+                </field>
+                <field id="coupon_rule_id" translate="label comment" type="text" sortOrder="50"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Cart Price Rule ID (for coupons)</label>
+                    <comment>ID of a Cart Price Rule configured with "Specific Coupon" + "Auto generation".</comment>
+                    <validate>validate-number</validate>
+                    <depends><field id="enabled">1</field><field id="coupon_enabled">1</field></depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

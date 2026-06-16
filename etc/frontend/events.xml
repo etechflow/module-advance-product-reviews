@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — frontend event observers
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="review_save_after">
+        <observer name="etechflow_save_review_extra"
+                  instance="ETechFlow\AdvancedProductReviews\Observer\SaveReviewExtra"/>
+    </event>
+</config>

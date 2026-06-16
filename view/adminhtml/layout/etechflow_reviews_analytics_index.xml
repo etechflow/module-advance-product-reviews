@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — analytics dashboard page
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="ETechFlow_AdvancedProductReviews::css/analytics.css"/>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <block class="ETechFlow\AdvancedProductReviews\Block\Adminhtml\Analytics\Dashboard"
+                   name="etechflow.reviews.analytics.dashboard"
+                   template="ETechFlow_AdvancedProductReviews::analytics/dashboard.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

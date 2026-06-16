@@ -1,0 +1,61 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — Questions & Answers tab
+ *
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+/** @var \ETechFlow\AdvancedProductReviews\ViewModel\ReviewData $vm */
+$vm = $block->getEtfViewModel();
+if (!$vm || !$vm->isEnabled()) {
+    return;
+}
+$productId = $vm->getCurrentProductId();
+$questions = $vm->getQuestions();
+?>
+<div class="etf-qa" data-role="etf-qa"
+     data-submit-url="<?= $escaper->escapeHtmlAttr($vm->getActionUrl('question/submit')) ?>">
+
+    <?php if (!empty($questions)): ?>
+        <ol class="etf-qa-list">
+            <?php foreach ($questions as $question): ?>
+                <li class="etf-qa-item">
+                    <div class="etf-question">
+                        <span class="etf-q-mark">Q</span>
+                        <span class="etf-q-text"><?= $escaper->escapeHtml($question->getQuestion()) ?></span>
+                    </div>
+                    <div class="etf-q-meta">
+                        <?= $escaper->escapeHtml(__('Asked by %1', $question->getAuthorName())) ?>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ol>
+    <?php else: ?>
+        <p class="etf-qa-empty"><?= $escaper->escapeHtml(__('No questions yet. Be the first to ask!')) ?></p>
+    <?php endif; ?>
+
+    <form class="etf-qa-form" data-role="etf-qa-form">
+        <input type="hidden" name="product_id" value="<?= (int) $productId ?>"/>
+        <h4><?= $escaper->escapeHtml(__('Ask a Question')) ?></h4>
+        <?php if (!$vm->isLoggedIn()): ?>
+            <input type="text" name="nickname" class="input-text"
+                   placeholder="<?= $escaper->escapeHtmlAttr(__('Your name')) ?>"/>
+        <?php endif; ?>
+        <textarea name="question" rows="3" class="etf-qa-input" required
+                  placeholder="<?= $escaper->escapeHtmlAttr(__('Type your question about this product…')) ?>"></textarea>
+        <button type="submit" class="action primary etf-qa-submit">
+            <?= $escaper->escapeHtml(__('Submit Question')) ?>
+        </button>
+        <div class="etf-qa-message" data-role="etf-qa-message"></div>
+    </form>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "[data-role=etf-qa]": {
+            "ETechFlow_AdvancedProductReviews/js/qa": {}
+        }
+    }
+</script>

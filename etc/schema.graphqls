@@ -1,0 +1,209 @@
+# ETechFlow_AdvancedProductReviews — GraphQL schema (headless / Hyvä / PWA)
+#
+# All types and fields are namespaced with `etf`/`Etf` so they never collide
+# with Magento core's built-in review GraphQL.
+
+type Query {
+    etfProductReviews(
+        sku: String @doc(description: "Product SKU. Either sku or productId is required.")
+        productId: Int @doc(description: "Product entity id. Either sku or productId is required.")
+        pageSize: Int = 10 @doc(description: "Reviews per page (max 100).")
+        currentPage: Int = 1 @doc(description: "Current page, 1-based.")
+        sort: EtfReviewSort = RECENT @doc(description: "Sort order.")
+        filter: EtfReviewFilterInput @doc(description: "Optional filters.")
+    ): EtfReviewList
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\ProductReviews")
+        @doc(description: "Enriched, paginated reviews for a product.")
+
+    etfReviewSummary(
+        sku: String @doc(description: "Product SKU. Either sku or productId is required.")
+        productId: Int @doc(description: "Product entity id. Either sku or productId is required.")
+    ): EtfReviewSummary
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\ReviewSummary")
+        @doc(description: "Rating average, star distribution and recommend/verified figures for a product.")
+
+    etfProductQuestions(
+        sku: String @doc(description: "Product SKU. Either sku or productId is required.")
+        productId: Int @doc(description: "Product entity id. Either sku or productId is required.")
+        pageSize: Int = 10
+        currentPage: Int = 1
+    ): EtfQuestionList
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\ProductQuestions")
+        @doc(description: "Approved customer questions (with answers) for a product.")
+}
+
+type Mutation {
+    etfVoteReviewHelpful(input: EtfVoteInput!): EtfVoteResult
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\VoteReviewHelpful")
+        @doc(description: "Record a 'was this helpful?' vote on a review.")
+
+    etfPostReviewComment(input: EtfCommentInput!): EtfCommentResult
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\PostReviewComment")
+        @doc(description: "Post a comment on a review.")
+
+    etfAskProductQuestion(input: EtfQuestionInput!): EtfQuestionResult
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\AskProductQuestion")
+        @doc(description: "Ask a question about a product.")
+
+    etfTranslateReview(input: EtfTranslateInput!): EtfTranslationResult
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\TranslateReview")
+        @doc(description: "Translate a review into the given language (Claude-powered, cached).")
+}
+
+# Expose the summary directly on any product so storefronts can fetch it inline.
+interface ProductInterface {
+    etf_review_summary: EtfReviewSummary
+        @resolver(class: "ETechFlow\\AdvancedProductReviews\\Model\\Resolver\\ProductReviewSummary")
+        @doc(description: "Advanced review summary for this product.")
+}
+
+enum EtfReviewSort {
+    RECENT
+    OLDEST
+    HELPFUL
+    HIGHEST_RATING
+    LOWEST_RATING
+}
+
+input EtfReviewFilterInput {
+    rating: Int @doc(description: "Only reviews whose rounded star rating equals this (1-5).")
+    verified_only: Boolean @doc(description: "Only verified-buyer reviews.")
+    with_media: Boolean @doc(description: "Only reviews that have photos/videos.")
+}
+
+type EtfReviewList {
+    items: [EtfReview]! @doc(description: "Reviews on the current page.")
+    total_count: Int! @doc(description: "Total matching reviews.")
+    page_info: EtfPageInfo!
+}
+
+type EtfPageInfo {
+    current_page: Int!
+    page_size: Int!
+    total_pages: Int!
+}
+
+type EtfReview {
+    review_id: Int!
+    title: String
+    detail: String
+    nickname: String
+    rating: Float @doc(description: "Average star rating 0-5.")
+    created_at: String
+    pros: [String]!
+    cons: [String]!
+    is_recommended: Boolean!
+    is_verified_buyer: Boolean!
+    helpful_count: Int!
+    not_helpful_count: Int!
+    original_language: String
+    media: [EtfReviewMedia]!
+    comments: [EtfReviewComment]!
+}
+
+type EtfReviewMedia {
+    media_id: Int!
+    media_type: String! @doc(description: "image | video")
+    url: String!
+    thumbnail_url: String
+}
+
+type EtfReviewComment {
+    comment_id: Int!
+    author_name: String!
+    comment: String!
+    is_admin_reply: Boolean!
+    created_at: String
+}
+
+type EtfReviewSummary {
+    product_id: Int!
+    review_count: Int!
+    average_rating: Float!
+    recommend_percent: Int!
+    verified_count: Int!
+    with_media_count: Int!
+    rating_distribution: [EtfRatingBucket]!
+}
+
+type EtfRatingBucket {
+    rating: Int! @doc(description: "Star value 1-5.")
+    count: Int!
+    percent: Int!
+}
+
+type EtfQuestionList {
+    items: [EtfQuestion]!
+    total_count: Int!
+    page_info: EtfPageInfo!
+}
+
+type EtfQuestion {
+    question_id: Int!
+    author_name: String!
+    question: String!
+    helpful_count: Int!
+    created_at: String
+    answers: [EtfAnswer]!
+}
+
+type EtfAnswer {
+    answer_id: Int!
+    author_name: String!
+    answer: String!
+    is_admin: Boolean!
+    helpful_count: Int!
+    created_at: String
+}
+
+# ---- Mutation inputs / results ----
+
+input EtfVoteInput {
+    review_id: Int!
+    helpful: Boolean! @doc(description: "true = helpful, false = not helpful.")
+}
+
+type EtfVoteResult {
+    success: Boolean!
+    message: String
+    helpful_count: Int
+    not_helpful_count: Int
+}
+
+input EtfCommentInput {
+    review_id: Int!
+    comment: String!
+    nickname: String @doc(description: "Required for guests; ignored for logged-in customers.")
+}
+
+type EtfCommentResult {
+    success: Boolean!
+    message: String
+}
+
+input EtfQuestionInput {
+    sku: String
+    product_id: Int
+    question: String!
+    nickname: String @doc(description: "Required for guests; ignored for logged-in customers.")
+}
+
+type EtfQuestionResult {
+    success: Boolean!
+    message: String
+}
+
+input EtfTranslateInput {
+    review_id: Int!
+    language: String! @doc(description: "Target language code, e.g. de, fr, es.")
+}
+
+type EtfTranslationResult {
+    success: Boolean!
+    message: String
+    language: String
+    title: String
+    detail: String
+    pros: [String]
+    cons: [String]
+}

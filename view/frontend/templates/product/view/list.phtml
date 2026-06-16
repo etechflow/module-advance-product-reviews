@@ -1,0 +1,271 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — enhanced review list (AJAX-loaded)
+ *
+ * @var \Magento\Review\Block\Product\View\ListView $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+/** @var \ETechFlow\AdvancedProductReviews\ViewModel\ReviewData $vm */
+$vm = $block->getEtfViewModel();
+$items = $block->getReviewsCollection()->getItems();
+$format = $block->getDateFormat() ?: \IntlDateFormatter::SHORT;
+
+$cfgEnableHelpful = $vm && $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_HELPFUL);
+$cfgEnableComments = $vm && $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_COMMENTS);
+$cfgEnableTranslate = $vm && $vm->isTranslationEnabled();
+
+// ---- Build the summary (count, avg rating %, recommendation rate, with-media) ----
+$total = count($items);
+$sumPercent = 0;
+$ratingCount = 0;
+$recommendCount = 0;
+$withMediaCount = 0;
+$extraMap = [];
+$mediaMap = [];
+foreach ($items as $review) {
+    $rid = (int) $review->getReviewId();
+    if ($vm) {
+        $extra = $vm->getExtra($rid);
+        $extraMap[$rid] = $extra;
+        if ($extra->getIsRecommended()) {
+            $recommendCount++;
+        }
+        $media = $vm->getMedia($rid);
+        $mediaMap[$rid] = $media;
+        if (!empty($media)) {
+            $withMediaCount++;
+        }
+    }
+    foreach ($review->getRatingVotes() as $vote) {
+        $sumPercent += (int) $vote->getPercent();
+        $ratingCount++;
+    }
+}
+$avgStars = $ratingCount ? round(($sumPercent / $ratingCount) / 20, 1) : 0;
+$recommendRate = $total ? round(($recommendCount / $total) * 100) : 0;
+?>
+<?php if ($total): ?>
+<div class="block review-list etf-review-list" id="customer-reviews" data-role="etf-reviews"
+     data-vote-url="<?= $escaper->escapeHtmlAttr($vm ? $vm->getActionUrl('vote/save') : '') ?>"
+     data-comment-url="<?= $escaper->escapeHtmlAttr($vm ? $vm->getActionUrl('comment/save') : '') ?>"
+     data-translate-url="<?= $escaper->escapeHtmlAttr($vm ? $vm->getActionUrl('translate/index') : '') ?>">
+
+    <!-- ===================== SUMMARY ===================== -->
+    <div class="etf-review-summary">
+        <div class="etf-summary-score">
+            <span class="etf-avg"><?= $escaper->escapeHtml((string) $avgStars) ?></span>
+            <span class="etf-avg-of"><?= $escaper->escapeHtml(__('out of 5')) ?></span>
+            <div class="etf-summary-count">
+                <?= $escaper->escapeHtml(__('%1 review(s)', $total)) ?>
+            </div>
+        </div>
+        <div class="etf-summary-meta">
+            <?php if ($recommendRate > 0): ?>
+                <div class="etf-recommend-rate">
+                    <strong><?= $escaper->escapeHtml((string) $recommendRate) ?>%</strong>
+                    <?= $escaper->escapeHtml(__('would recommend')) ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- ===================== FILTERS ===================== -->
+    <div class="etf-review-filters" data-role="etf-filters">
+        <button type="button" class="etf-filter active" data-filter="all">
+            <?= $escaper->escapeHtml(__('All')) ?>
+        </button>
+        <button type="button" class="etf-filter" data-filter="recommended">
+            <?= $escaper->escapeHtml(__('Recommended')) ?>
+        </button>
+        <button type="button" class="etf-filter" data-filter="verified">
+            <?= $escaper->escapeHtml(__('Verified Buyers')) ?>
+        </button>
+        <button type="button" class="etf-filter" data-filter="media">
+            <?= $escaper->escapeHtml(__('With Photos/Videos')) ?>
+        </button>
+        <select class="etf-sort" data-role="etf-sort">
+            <option value="date"><?= $escaper->escapeHtml(__('Most Recent')) ?></option>
+            <option value="helpful"><?= $escaper->escapeHtml(__('Most Helpful')) ?></option>
+            <option value="rating"><?= $escaper->escapeHtml(__('Highest Rated')) ?></option>
+        </select>
+    </div>
+
+    <ol class="items review-items etf-items">
+        <?php foreach ($items as $review): ?>
+            <?php
+            $rid = (int) $review->getReviewId();
+            $extra = $extraMap[$rid] ?? null;
+            $media = $mediaMap[$rid] ?? [];
+            
+            // === DEBUG: Temporary diagnostic output ===
+            // Remove this block after debugging
+            if (false) { // Change to true to enable debug output
+                echo "<!-- DEBUG Review #{$rid}: ";
+                echo "Media count = " . count($media) . "; ";
+                if (!empty($media)) {
+                    foreach ($media as $m) {
+                        echo "Type=" . $m->getMediaType() . ", ";
+                        echo "Path=" . $m->getFilePath() . "; ";
+                    }
+                }
+                echo " -->\n";
+            }
+            // === END DEBUG ===
+            
+            $isRecommended = $extra && $extra->getIsRecommended();
+            $isVerified = $extra && $extra->getIsVerifiedBuyer();
+            $hasMedia = !empty($media);
+            $helpful = $extra ? $extra->getHelpfulCount() : 0;
+            $notHelpful = $extra ? $extra->getNotHelpfulCount() : 0;
+            $reviewPercent = 0;
+            $rv = 0;
+            foreach ($review->getRatingVotes() as $vote) {
+                $reviewPercent += (int) $vote->getPercent();
+                $rv++;
+            }
+            $reviewStars = $rv ? ($reviewPercent / $rv) : 0;
+            $pros = ($vm && $extra) ? $vm->splitLines($extra->getPros()) : [];
+            $cons = ($vm && $extra) ? $vm->splitLines($extra->getCons()) : [];
+            ?>
+            <li class="item review-item etf-review-item"
+                data-recommended="<?= $isRecommended ? '1' : '0' ?>"
+                data-verified="<?= $isVerified ? '1' : '0' ?>"
+                data-media="<?= $hasMedia ? '1' : '0' ?>"
+                data-helpful="<?= (int) $helpful ?>"
+                data-rating="<?= (int) round($reviewStars) ?>"
+                data-review-id="<?= $escaper->escapeHtmlAttr((string) $rid) ?>">
+
+                <div class="review-title">
+                    <strong data-role="etf-translatable" data-field="title"><?= $escaper->escapeHtml($review->getTitle()) ?></strong>
+                    <?php if ($isVerified): ?>
+                        <span class="etf-badge etf-badge-verified"><?= $escaper->escapeHtml(__('Verified Buyer')) ?></span>
+                    <?php endif; ?>
+                    <?php if ($isRecommended): ?>
+                        <span class="etf-badge etf-badge-recommend"><?= $escaper->escapeHtml(__('Recommends')) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($rv): ?>
+                    <div class="review-ratings etf-stars" title="<?= $escaper->escapeHtmlAttr((string) round($reviewStars)) ?>%">
+                        <div class="rating-result" style="--etf-pct: <?= (int) round($reviewStars) ?>%">
+                            <span style="width: <?= (int) round($reviewStars) ?>%;"></span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <div class="review-content" data-role="etf-translatable" data-field="detail"><?= /* @noEscape */ nl2br($escaper->escapeHtml($review->getDetail())) ?></div>
+
+                <?php if (!empty($pros) || !empty($cons)): ?>
+                    <div class="etf-proscons">
+                        <?php if (!empty($pros)): ?>
+                            <div class="etf-pros">
+                                <span class="etf-proscons-title"><?= $escaper->escapeHtml(__('Pros')) ?></span>
+                                <ul data-role="etf-translatable" data-field="pros"><?php foreach ($pros as $p): ?><li><?= $escaper->escapeHtml($p) ?></li><?php endforeach; ?></ul>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($cons)): ?>
+                            <div class="etf-cons">
+                                <span class="etf-proscons-title"><?= $escaper->escapeHtml(__('Cons')) ?></span>
+                                <ul data-role="etf-translatable" data-field="cons"><?php foreach ($cons as $c): ?><li><?= $escaper->escapeHtml($c) ?></li><?php endforeach; ?></ul>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($hasMedia): ?>
+                    <div class="etf-media-gallery" data-role="etf-gallery">
+                        <?php foreach ($media as $m): ?>
+                            <?php $url = $vm ? $vm->getMediaUrl($m->getFilePath()) : ''; ?>
+                            <?php if ($m->isVideo()): ?>
+                                <button type="button" class="etf-media-item etf-media-video"
+                                        data-role="etf-video-play"
+                                        data-video-src="<?= $escaper->escapeHtmlAttr($url) ?>"
+                                        aria-label="<?= $escaper->escapeHtmlAttr(__('Play video review')) ?>">
+                                    <span class="etf-play-icon" aria-hidden="true">▶</span>
+                                </button>
+                            <?php else: ?>
+                                <a href="<?= $escaper->escapeHtmlAttr($url) ?>" class="etf-media-item etf-media-image"
+                                   target="_blank" rel="noopener">
+                                    <img src="<?= $escaper->escapeHtmlAttr($url) ?>" loading="lazy"
+                                         alt="<?= $escaper->escapeHtmlAttr(__('Review photo')) ?>"/>
+                                </a>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="review-details etf-review-meta">
+                    <span class="review-author"><?= $escaper->escapeHtml(__('By %1', $review->getNickname())) ?></span>
+                    <time class="review-date"><?= $escaper->escapeHtml($block->formatDate($review->getCreatedAt(), $format)) ?></time>
+                </div>
+
+                <?php if ($cfgEnableTranslate): ?>
+                    <div class="etf-translate" data-role="etf-translate">
+                        <button type="button" class="etf-translate-btn" data-state="original"
+                                data-label-translate="<?= $escaper->escapeHtmlAttr(__('Translate')) ?>"
+                                data-label-original="<?= $escaper->escapeHtmlAttr(__('Show original')) ?>">
+                            <?= $escaper->escapeHtml(__('Translate')) ?>
+                        </button>
+                        <span class="etf-translate-status" data-role="etf-translate-status" aria-live="polite"></span>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($cfgEnableHelpful): ?>
+                    <div class="etf-helpful" data-role="etf-helpful">
+                        <span class="etf-helpful-label"><?= $escaper->escapeHtml(__('Was this helpful?')) ?></span>
+                        <button type="button" class="etf-helpful-yes" data-helpful="1">
+                            👍 <span data-role="helpful-count"><?= (int) $helpful ?></span>
+                        </button>
+                        <button type="button" class="etf-helpful-no" data-helpful="0">
+                            👎 <span data-role="nothelpful-count"><?= (int) $notHelpful ?></span>
+                        </button>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($cfgEnableComments && $vm): ?>
+                    <?php $comments = $vm->getComments($rid); ?>
+                    <div class="etf-comments" data-role="etf-comments">
+                        <?php if (!empty($comments)): ?>
+                            <div class="etf-comments-list">
+                                <?php foreach ($comments as $comment): ?>
+                                    <div class="etf-comment <?= $comment->isAdminReply() ? 'etf-comment-admin' : '' ?>">
+                                        <strong><?= $escaper->escapeHtml($comment->getAuthorName()) ?></strong>
+                                        <?php if ($comment->isAdminReply()): ?>
+                                            <span class="etf-badge etf-badge-store"><?= $escaper->escapeHtml(__('Store')) ?></span>
+                                        <?php endif; ?>
+                                        <p><?= /* @noEscape */ nl2br($escaper->escapeHtml($comment->getComment())) ?></p>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        <form class="etf-comment-form" data-role="etf-comment-form">
+                            <input type="hidden" name="review_id" value="<?= (int) $rid ?>"/>
+                            <?php if (!$vm->isLoggedIn()): ?>
+                                <input type="text" name="nickname" class="input-text"
+                                       placeholder="<?= $escaper->escapeHtmlAttr(__('Your name')) ?>"/>
+                            <?php endif; ?>
+                            <textarea name="comment" rows="2" class="etf-comment-input"
+                                      placeholder="<?= $escaper->escapeHtmlAttr(__('Add a comment…')) ?>"></textarea>
+                            <button type="submit" class="action etf-comment-submit">
+                                <?= $escaper->escapeHtml(__('Post')) ?>
+                            </button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ol>
+
+    <div class="toolbar review-toolbar"><?= $block->getChildHtml('toolbar') ?></div>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "[data-role=etf-reviews]": {
+            "ETechFlow_AdvancedProductReviews/js/reviews": {}
+        }
+    }
+</script>
+<?php endif; ?>

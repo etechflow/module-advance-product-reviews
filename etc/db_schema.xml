@@ -1,0 +1,277 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — declarative DB schema
+ *
+ * Notes on cross-edition compatibility:
+ *  - product_id columns are INDEXED, not hard foreign-keyed, because Adobe
+ *    Commerce (EE) Content Staging changes catalog_product_entity's primary
+ *    key to row_id. A hard FK to entity_id breaks on EE. Index keeps it fast
+ *    and portable across CE / EE / Cloud.
+ *  - review_id FKs use ON DELETE CASCADE so all child rows are cleaned up
+ *    automatically when a review is deleted from the core review table.
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+
+    <!-- =========================================================
+         1) REVIEW EXTRA — 1:1 extension of core `review` row
+         ========================================================= -->
+    <table name="etechflow_review_extra" resource="default" engine="innodb"
+           comment="Extra data for product reviews (pros/cons, recommend, verified, helpful counts)">
+        <column xsi:type="int" name="extra_id" unsigned="true" nullable="false" identity="true"
+                comment="Extra ID"/>
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false"
+                comment="Core Review ID"/>
+        <column xsi:type="text" name="pros" nullable="true" comment="Pros (one per line)"/>
+        <column xsi:type="text" name="cons" nullable="true" comment="Cons (one per line)"/>
+        <column xsi:type="smallint" name="is_recommended" unsigned="true" nullable="false" default="0"
+                comment="Customer recommends product (0/1)"/>
+        <column xsi:type="smallint" name="is_verified_buyer" unsigned="true" nullable="false" default="0"
+                comment="Reviewer purchased the product (0/1)"/>
+        <column xsi:type="int" name="helpful_count" unsigned="true" nullable="false" default="0"
+                comment="Helpful (thumbs up) count"/>
+        <column xsi:type="int" name="not_helpful_count" unsigned="true" nullable="false" default="0"
+                comment="Not helpful (thumbs down) count"/>
+        <column xsi:type="varchar" name="original_language" length="12" nullable="true"
+                comment="Detected source language code (e.g. en, de, fr)"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Updated At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="extra_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_REVIEW_EXTRA_REVIEW_ID_REVIEW_REVIEW_ID"
+                    table="etechflow_review_extra" column="review_id"
+                    referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="ETECHFLOW_REVIEW_EXTRA_REVIEW_ID">
+            <column name="review_id"/>
+        </constraint>
+    </table>
+
+    <!-- =========================================================
+         2) REVIEW MEDIA — N images / videos per review
+         ========================================================= -->
+    <table name="etechflow_review_media" resource="default" engine="innodb"
+           comment="Images and videos attached to a review">
+        <column xsi:type="int" name="media_id" unsigned="true" nullable="false" identity="true"
+                comment="Media ID"/>
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false"
+                comment="Core Review ID"/>
+        <column xsi:type="varchar" name="media_type" length="16" nullable="false" default="image"
+                comment="image | video"/>
+        <column xsi:type="varchar" name="file_path" length="255" nullable="false"
+                comment="Path under pub/media"/>
+        <column xsi:type="varchar" name="thumbnail_path" length="255" nullable="true"
+                comment="Video poster / image thumb path"/>
+        <column xsi:type="varchar" name="mime_type" length="64" nullable="true" comment="MIME type"/>
+        <column xsi:type="int" name="sort_order" unsigned="true" nullable="false" default="0"
+                comment="Display order"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="media_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_REVIEW_MEDIA_REVIEW_ID_REVIEW_REVIEW_ID"
+                    table="etechflow_review_media" column="review_id"
+                    referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+        <index referenceId="ETECHFLOW_REVIEW_MEDIA_REVIEW_ID" indexType="btree">
+            <column name="review_id"/>
+        </index>
+    </table>
+
+    <!-- =========================================================
+         3) REVIEW VOTE — one helpful/not-helpful vote per user
+         ========================================================= -->
+    <table name="etechflow_review_vote" resource="default" engine="innodb"
+           comment="'Was this helpful?' votes; prevents duplicate voting">
+        <column xsi:type="int" name="vote_id" unsigned="true" nullable="false" identity="true"
+                comment="Vote ID"/>
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false" comment="Core Review ID"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer ID (logged in)"/>
+        <column xsi:type="varchar" name="visitor_hash" length="64" nullable="true"
+                comment="Hash of guest identity (cookie/ip) to dedupe guest votes"/>
+        <column xsi:type="smallint" name="is_helpful" unsigned="true" nullable="false" default="1"
+                comment="1 = helpful, 0 = not helpful"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="vote_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_REVIEW_VOTE_REVIEW_ID_REVIEW_REVIEW_ID"
+                    table="etechflow_review_vote" column="review_id"
+                    referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="ETECHFLOW_REVIEW_VOTE_REVIEW_ID_CUSTOMER_ID">
+            <column name="review_id"/>
+            <column name="customer_id"/>
+        </constraint>
+        <index referenceId="ETECHFLOW_REVIEW_VOTE_REVIEW_ID_VISITOR_HASH" indexType="btree">
+            <column name="review_id"/>
+            <column name="visitor_hash"/>
+        </index>
+    </table>
+
+    <!-- =========================================================
+         4) REVIEW COMMENT — threaded comments + admin replies
+         ========================================================= -->
+    <table name="etechflow_review_comment" resource="default" engine="innodb"
+           comment="Comments on reviews and admin (store representative) replies">
+        <column xsi:type="int" name="comment_id" unsigned="true" nullable="false" identity="true"
+                comment="Comment ID"/>
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false" comment="Core Review ID"/>
+        <column xsi:type="int" name="parent_id" unsigned="true" nullable="true" comment="Parent comment (threading)"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer ID"/>
+        <column xsi:type="varchar" name="author_name" length="128" nullable="false" comment="Display name"/>
+        <column xsi:type="text" name="comment" nullable="false" comment="Comment body"/>
+        <column xsi:type="smallint" name="is_admin_reply" unsigned="true" nullable="false" default="0"
+                comment="Posted by store representative (0/1)"/>
+        <column xsi:type="smallint" name="visible_in_account_only" unsigned="true" nullable="false" default="0"
+                comment="Show only in customer account, not storefront (0/1)"/>
+        <column xsi:type="smallint" name="status" unsigned="true" nullable="false" default="1"
+                comment="1=pending, 2=approved, 3=rejected"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="comment_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_REVIEW_COMMENT_REVIEW_ID_REVIEW_REVIEW_ID"
+                    table="etechflow_review_comment" column="review_id"
+                    referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+        <index referenceId="ETECHFLOW_REVIEW_COMMENT_REVIEW_ID_STATUS" indexType="btree">
+            <column name="review_id"/>
+            <column name="status"/>
+        </index>
+    </table>
+
+    <!-- =========================================================
+         5) REVIEW TRANSLATION — cached auto-translations (Claude)
+         ========================================================= -->
+    <table name="etechflow_review_translation" resource="default" engine="innodb"
+           comment="Cached machine translations of reviews per language">
+        <column xsi:type="int" name="translation_id" unsigned="true" nullable="false" identity="true"
+                comment="Translation ID"/>
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false" comment="Core Review ID"/>
+        <column xsi:type="varchar" name="language" length="12" nullable="false" comment="Target language code"/>
+        <column xsi:type="varchar" name="translated_title" length="255" nullable="true" comment="Translated title"/>
+        <column xsi:type="text" name="translated_detail" nullable="true" comment="Translated body"/>
+        <column xsi:type="text" name="translated_pros" nullable="true" comment="Translated pros"/>
+        <column xsi:type="text" name="translated_cons" nullable="true" comment="Translated cons"/>
+        <column xsi:type="varchar" name="engine" length="32" nullable="true" default="claude"
+                comment="Translation engine used"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="translation_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_REVIEW_TRANSLATION_REVIEW_ID_REVIEW_REVIEW_ID"
+                    table="etechflow_review_translation" column="review_id"
+                    referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="ETECHFLOW_REVIEW_TRANSLATION_REVIEW_ID_LANGUAGE">
+            <column name="review_id"/>
+            <column name="language"/>
+        </constraint>
+    </table>
+
+    <!-- =========================================================
+         6) Q&A QUESTION — product questions
+         ========================================================= -->
+    <table name="etechflow_qa_question" resource="default" engine="innodb"
+           comment="Customer questions on a product">
+        <column xsi:type="int" name="question_id" unsigned="true" nullable="false" identity="true"
+                comment="Question ID"/>
+        <column xsi:type="int" name="product_id" unsigned="true" nullable="false"
+                comment="Product entity_id (indexed, not FK — EE staging safe)"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" default="0" comment="Store ID"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer ID"/>
+        <column xsi:type="varchar" name="author_name" length="128" nullable="false" comment="Display name"/>
+        <column xsi:type="text" name="question" nullable="false" comment="Question text"/>
+        <column xsi:type="int" name="helpful_count" unsigned="true" nullable="false" default="0" comment="Helpful votes"/>
+        <column xsi:type="smallint" name="status" unsigned="true" nullable="false" default="1"
+                comment="1=pending, 2=approved, 3=rejected"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="question_id"/>
+        </constraint>
+        <index referenceId="ETECHFLOW_QA_QUESTION_PRODUCT_ID_STORE_ID_STATUS" indexType="btree">
+            <column name="product_id"/>
+            <column name="store_id"/>
+            <column name="status"/>
+        </index>
+    </table>
+
+    <!-- =========================================================
+         7) Q&A ANSWER — answers to questions
+         ========================================================= -->
+    <table name="etechflow_qa_answer" resource="default" engine="innodb"
+           comment="Answers to product questions">
+        <column xsi:type="int" name="answer_id" unsigned="true" nullable="false" identity="true"
+                comment="Answer ID"/>
+        <column xsi:type="int" name="question_id" unsigned="true" nullable="false" comment="Question ID"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer ID"/>
+        <column xsi:type="varchar" name="author_name" length="128" nullable="false" comment="Display name"/>
+        <column xsi:type="text" name="answer" nullable="false" comment="Answer text"/>
+        <column xsi:type="smallint" name="is_admin" unsigned="true" nullable="false" default="0"
+                comment="Answered by store staff (0/1)"/>
+        <column xsi:type="int" name="helpful_count" unsigned="true" nullable="false" default="0" comment="Helpful votes"/>
+        <column xsi:type="smallint" name="status" unsigned="true" nullable="false" default="1"
+                comment="1=pending, 2=approved, 3=rejected"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="answer_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_QA_ANSWER_QUESTION_ID_QA_QUESTION_QUESTION_ID"
+                    table="etechflow_qa_answer" column="question_id"
+                    referenceTable="etechflow_qa_question" referenceColumn="question_id" onDelete="CASCADE"/>
+        <index referenceId="ETECHFLOW_QA_ANSWER_QUESTION_ID_STATUS" indexType="btree">
+            <column name="question_id"/>
+            <column name="status"/>
+        </index>
+    </table>
+
+    <!-- =========================================================
+         8) REVIEW REMINDER — post-purchase reminder scheduling
+         ========================================================= -->
+    <table name="etechflow_review_reminder" resource="default" engine="innodb"
+           comment="Scheduled post-purchase review reminder emails + coupon issuance">
+        <column xsi:type="int" name="reminder_id" unsigned="true" nullable="false" identity="true"
+                comment="Reminder ID"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Sales order entity_id"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer ID"/>
+        <column xsi:type="varchar" name="customer_email" length="255" nullable="false" comment="Recipient email"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" default="0" comment="Store ID"/>
+        <column xsi:type="varchar" name="status" length="16" nullable="false" default="pending"
+                comment="pending | sent | cancelled"/>
+        <column xsi:type="smallint" name="reminder_step" unsigned="true" nullable="false" default="1"
+                comment="Which staggered reminder in the sequence"/>
+        <column xsi:type="timestamp" name="scheduled_at" on_update="false" nullable="true" comment="When to send"/>
+        <column xsi:type="timestamp" name="sent_at" on_update="false" nullable="true" comment="When sent"/>
+        <column xsi:type="varchar" name="coupon_code" length="64" nullable="true" comment="Generated coupon code"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="reminder_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ETECHFLOW_REVIEW_REMINDER_ORDER_ID_SALES_ORDER_ENTITY_ID"
+                    table="etechflow_review_reminder" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <index referenceId="ETECHFLOW_REVIEW_REMINDER_STATUS_SCHEDULED_AT" indexType="btree">
+            <column name="status"/>
+            <column name="scheduled_at"/>
+        </index>
+    </table>
+
+</schema>

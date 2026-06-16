@@ -1,0 +1,159 @@
+{
+    "etechflow_review_extra": {
+        "column": {
+            "extra_id": true,
+            "review_id": true,
+            "pros": true,
+            "cons": true,
+            "is_recommended": true,
+            "is_verified_buyer": true,
+            "helpful_count": true,
+            "not_helpful_count": true,
+            "original_language": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_REVIEW_EXTRA_REVIEW_ID_REVIEW_REVIEW_ID": true,
+            "ETECHFLOW_REVIEW_EXTRA_REVIEW_ID": true
+        }
+    },
+    "etechflow_review_media": {
+        "column": {
+            "media_id": true,
+            "review_id": true,
+            "media_type": true,
+            "file_path": true,
+            "thumbnail_path": true,
+            "mime_type": true,
+            "sort_order": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_REVIEW_MEDIA_REVIEW_ID_REVIEW_REVIEW_ID": true
+        },
+        "index": {
+            "ETECHFLOW_REVIEW_MEDIA_REVIEW_ID": true
+        }
+    },
+    "etechflow_review_vote": {
+        "column": {
+            "vote_id": true,
+            "review_id": true,
+            "customer_id": true,
+            "visitor_hash": true,
+            "is_helpful": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_REVIEW_VOTE_REVIEW_ID_REVIEW_REVIEW_ID": true,
+            "ETECHFLOW_REVIEW_VOTE_REVIEW_ID_CUSTOMER_ID": true
+        },
+        "index": {
+            "ETECHFLOW_REVIEW_VOTE_REVIEW_ID_VISITOR_HASH": true
+        }
+    },
+    "etechflow_review_comment": {
+        "column": {
+            "comment_id": true,
+            "review_id": true,
+            "parent_id": true,
+            "customer_id": true,
+            "author_name": true,
+            "comment": true,
+            "is_admin_reply": true,
+            "visible_in_account_only": true,
+            "status": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_REVIEW_COMMENT_REVIEW_ID_REVIEW_REVIEW_ID": true
+        },
+        "index": {
+            "ETECHFLOW_REVIEW_COMMENT_REVIEW_ID_STATUS": true
+        }
+    },
+    "etechflow_review_translation": {
+        "column": {
+            "translation_id": true,
+            "review_id": true,
+            "language": true,
+            "translated_title": true,
+            "translated_detail": true,
+            "translated_pros": true,
+            "translated_cons": true,
+            "engine": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_REVIEW_TRANSLATION_REVIEW_ID_REVIEW_REVIEW_ID": true,
+            "ETECHFLOW_REVIEW_TRANSLATION_REVIEW_ID_LANGUAGE": true
+        }
+    },
+    "etechflow_qa_question": {
+        "column": {
+            "question_id": true,
+            "product_id": true,
+            "store_id": true,
+            "customer_id": true,
+            "author_name": true,
+            "question": true,
+            "helpful_count": true,
+            "status": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        },
+        "index": {
+            "ETECHFLOW_QA_QUESTION_PRODUCT_ID_STORE_ID_STATUS": true
+        }
+    },
+    "etechflow_qa_answer": {
+        "column": {
+            "answer_id": true,
+            "question_id": true,
+            "customer_id": true,
+            "author_name": true,
+            "answer": true,
+            "is_admin": true,
+            "helpful_count": true,
+            "status": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_QA_ANSWER_QUESTION_ID_QA_QUESTION_QUESTION_ID": true
+        },
+        "index": {
+            "ETECHFLOW_QA_ANSWER_QUESTION_ID_STATUS": true
+        }
+    },
+    "etechflow_review_reminder": {
+        "column": {
+            "reminder_id": true,
+            "order_id": true,
+            "customer_id": true,
+            "customer_email": true,
+            "store_id": true,
+            "status": true,
+            "reminder_step": true,
+            "scheduled_at": true,
+            "sent_at": true,
+            "coupon_code": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_REVIEW_REMINDER_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        },
+        "index": {
+            "ETECHFLOW_REVIEW_REMINDER_STATUS_SCHEDULED_AT": true
+        }
+    }
+}

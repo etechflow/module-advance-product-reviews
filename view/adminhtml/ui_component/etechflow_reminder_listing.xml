@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — review reminders grid
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">etechflow_reminder_listing.etechflow_reminder_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <spinner>etechflow_reminder_columns</spinner>
+        <deps>
+            <dep>etechflow_reminder_listing.etechflow_reminder_listing_data_source</dep>
+        </deps>
+    </settings>
+
+    <dataSource name="etechflow_reminder_listing_data_source"
+                component="Magento_Ui/js/grid/provider">
+        <settings>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>ETechFlow_AdvancedProductReviews::reminders</aclResource>
+        <dataProvider name="etechflow_reminder_listing_data_source"
+                      class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+            <settings>
+                <requestFieldName>reminder_id</requestFieldName>
+                <primaryFieldName>reminder_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+
+    <listingToolbar name="listing_top">
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters"/>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+
+    <columns name="etechflow_reminder_columns">
+        <column name="reminder_id">
+            <settings>
+                <filter>textRange</filter>
+                <sorting>desc</sorting>
+                <label translate="true">ID</label>
+            </settings>
+        </column>
+        <column name="order_id">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Order ID</label>
+            </settings>
+        </column>
+        <column name="customer_email">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Email</label>
+            </settings>
+        </column>
+        <column name="status">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Status</label>
+            </settings>
+        </column>
+        <column name="reminder_step">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Step</label>
+            </settings>
+        </column>
+        <column name="coupon_code">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Coupon</label>
+            </settings>
+        </column>
+        <column name="scheduled_at" class="Magento\Ui\Component\Listing\Columns\Date"
+                component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Scheduled</label>
+            </settings>
+        </column>
+        <column name="sent_at" class="Magento\Ui\Component\Listing\Columns\Date"
+                component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Sent</label>
+            </settings>
+        </column>
+    </columns>
+</listing>

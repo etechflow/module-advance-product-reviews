@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — dependency injection wiring
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ *
+ * v1.0.1 fix: grid CollectionFactory data sources MUST be declared in
+ * etc/di.xml (global scope), not etc/adminhtml/di.xml. Magento's
+ * setup:di:compile writes the per-area config (adminhtml.php) such that
+ * an <argument xsi:type="array"> contribution from an area-scoped di.xml
+ * REPLACES the global array for that scope instead of merging — so when
+ * this lived in etc/adminhtml/di.xml it wiped every other module's
+ * listing data source registration in adminhtml.php (only these 3
+ * survived). Effect: every admin grid that used another module's
+ * CollectionFactory entry threw "Not registered handle ..." on
+ * setup:di:compile + production-style runs.
+ *
+ * Confirmed via grep of generated/metadata/{global,adminhtml}.php —
+ * global.php had 60 listing handles, adminhtml.php had only 3 (these).
+ * Moving the <type> block to global scope below restores merging.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Service contract preferences: interface -> implementation -->
+    <preference for="ETechFlow\AdvancedProductReviews\Api\Data\ReviewExtraInterface"
+                type="ETechFlow\AdvancedProductReviews\Model\ReviewExtra"/>
+    <preference for="ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface"
+                type="ETechFlow\AdvancedProductReviews\Model\ReviewExtraRepository"/>
+    <preference for="ETechFlow\AdvancedProductReviews\Api\Data\ReviewExtraSearchResultsInterface"
+                type="Magento\Framework\Api\SearchResults"/>
+
+    <!-- Phase 7: headless review summary (REST + GraphQL share the same service) -->
+    <preference for="ETechFlow\AdvancedProductReviews\Api\ReviewSummaryManagementInterface"
+                type="ETechFlow\AdvancedProductReviews\Model\ReviewSummaryManagement"/>
+    <preference for="ETechFlow\AdvancedProductReviews\Api\Data\ReviewSummaryInterface"
+                type="ETechFlow\AdvancedProductReviews\Model\Data\ReviewSummary"/>
+    <preference for="ETechFlow\AdvancedProductReviews\Api\Data\RatingBucketInterface"
+                type="ETechFlow\AdvancedProductReviews\Model\Data\RatingBucket"/>
+
+    <!-- Register grid collections against their UI data-source names (global scope so it merges) -->
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="etechflow_review_comment_listing_data_source" xsi:type="string">ETechFlow\AdvancedProductReviews\Model\ResourceModel\ReviewComment\Grid\Collection</item>
+                <item name="etechflow_question_listing_data_source" xsi:type="string">ETechFlow\AdvancedProductReviews\Model\ResourceModel\Question\Grid\Collection</item>
+                <item name="etechflow_reminder_listing_data_source" xsi:type="string">ETechFlow\AdvancedProductReviews\Model\ResourceModel\Reminder\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Bind each grid collection to its table + resource model -->
+    <type name="ETechFlow\AdvancedProductReviews\Model\ResourceModel\ReviewComment\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">etechflow_review_comment</argument>
+            <argument name="eventPrefix" xsi:type="string">etechflow_review_comment_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">comment_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">ETechFlow\AdvancedProductReviews\Model\ResourceModel\ReviewComment</argument>
+        </arguments>
+    </type>
+
+    <type name="ETechFlow\AdvancedProductReviews\Model\ResourceModel\Question\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">etechflow_qa_question</argument>
+            <argument name="eventPrefix" xsi:type="string">etechflow_question_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">question_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">ETechFlow\AdvancedProductReviews\Model\ResourceModel\Question</argument>
+        </arguments>
+    </type>
+
+    <type name="ETechFlow\AdvancedProductReviews\Model\ResourceModel\Reminder\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">etechflow_review_reminder</argument>
+            <argument name="eventPrefix" xsi:type="string">etechflow_reminder_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">reminder_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">ETechFlow\AdvancedProductReviews\Model\ResourceModel\Reminder</argument>
+        </arguments>
+    </type>
+
+    <!-- Console commands -->
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="etechflow_debug_review_media" xsi:type="object">ETechFlow\AdvancedProductReviews\Console\Command\DebugReviewMedia</item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

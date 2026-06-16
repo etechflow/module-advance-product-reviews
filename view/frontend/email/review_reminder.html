@@ -1,0 +1,37 @@
+<!--@subject {{trans "How was your recent purchase? Leave a review"}} @-->
+<!--@vars
+{
+"var customer_name":"Customer Name",
+"var store.frontend_name":"Store Name",
+"var coupon_code":"Coupon Code",
+"var review_url":"Review URL"
+}
+@-->
+{{template config_path="design/email/header_template"}}
+
+<table>
+    <tr class="email-intro">
+        <td>
+            <p class="greeting">{{trans "Hi %customer_name," customer_name=$customer_name}}</p>
+            <p>
+                {{trans "Thank you for shopping with %store_name. We'd love to hear what you think about your recent purchase — your feedback helps other shoppers and helps us improve." store_name=$store.frontend_name}}
+            </p>
+        </td>
+    </tr>
+    <tr class="email-information">
+        <td>
+            <p>
+                <a href="{{var review_url}}">{{trans "Write your review"}}</a>
+            </p>
+
+            {{depend coupon_code}}
+            <p>
+                {{trans "As a thank you, here is a discount code for your next order:"}}
+                <strong>{{var coupon_code}}</strong>
+            </p>
+            {{/depend}}
+        </td>
+    </tr>
+</table>
+
+{{template config_path="design/email/footer_template"}}

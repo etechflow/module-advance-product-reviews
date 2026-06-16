@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — product questions (Q&A) grid
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">etechflow_question_listing.etechflow_question_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <spinner>etechflow_question_columns</spinner>
+        <deps>
+            <dep>etechflow_question_listing.etechflow_question_listing_data_source</dep>
+        </deps>
+    </settings>
+
+    <dataSource name="etechflow_question_listing_data_source"
+                component="Magento_Ui/js/grid/provider">
+        <settings>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>ETechFlow_AdvancedProductReviews::questions</aclResource>
+        <dataProvider name="etechflow_question_listing_data_source"
+                      class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+            <settings>
+                <requestFieldName>question_id</requestFieldName>
+                <primaryFieldName>question_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+
+    <listingToolbar name="listing_top">
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters"/>
+        <massaction name="listing_massaction">
+            <action name="approve">
+                <settings>
+                    <confirm>
+                        <message translate="true">Approve selected questions?</message>
+                        <title translate="true">Approve Questions</title>
+                    </confirm>
+                    <url path="etechflow_reviews/question/massApprove"/>
+                    <type>approve</type>
+                    <label translate="true">Approve</label>
+                </settings>
+            </action>
+            <action name="reject">
+                <settings>
+                    <confirm>
+                        <message translate="true">Reject selected questions?</message>
+                        <title translate="true">Reject Questions</title>
+                    </confirm>
+                    <url path="etechflow_reviews/question/massReject"/>
+                    <type>reject</type>
+                    <label translate="true">Reject</label>
+                </settings>
+            </action>
+            <action name="delete">
+                <settings>
+                    <confirm>
+                        <message translate="true">Delete selected questions? This cannot be undone.</message>
+                        <title translate="true">Delete Questions</title>
+                    </confirm>
+                    <url path="etechflow_reviews/question/massDelete"/>
+                    <type>delete</type>
+                    <label translate="true">Delete</label>
+                </settings>
+            </action>
+        </massaction>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+
+    <columns name="etechflow_question_columns">
+        <selectionsColumn name="ids">
+            <settings>
+                <indexField>question_id</indexField>
+            </settings>
+        </selectionsColumn>
+        <column name="question_id">
+            <settings>
+                <filter>textRange</filter>
+                <sorting>desc</sorting>
+                <label translate="true">ID</label>
+            </settings>
+        </column>
+        <column name="product_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Product</label>
+            </settings>
+        </column>
+        <column name="author_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Author</label>
+            </settings>
+        </column>
+        <column name="question">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Question</label>
+            </settings>
+        </column>
+        <column name="helpful_count">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Helpful</label>
+            </settings>
+        </column>
+        <column name="status" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <options class="ETechFlow\AdvancedProductReviews\Model\Source\Status"/>
+                <dataType>select</dataType>
+                <filter>select</filter>
+                <label translate="true">Status</label>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date"
+                component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Created</label>
+            </settings>
+        </column>
+    </columns>
+</listing>

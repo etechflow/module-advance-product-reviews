@@ -1,0 +1,102 @@
+/**
+ * ETechFlow_AdvancedProductReviews — storefront styles (Luma)
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+/* Summary */
+.etf-review-summary { display: flex; align-items: center; gap: 24px; padding: 16px 0; border-bottom: 1px solid #e8e8e8; margin-bottom: 16px; }
+.etf-summary-score .etf-avg { font-size: 2.4rem; font-weight: 700; }
+.etf-summary-score .etf-avg-of { color: #777; margin-left: 4px; }
+.etf-summary-count { color: #777; font-size: 1.2rem; }
+.etf-recommend-rate strong { font-size: 1.6rem; color: #1a7f37; }
+
+/* Filters */
+.etf-review-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.etf-review-filters .etf-filter { background: #f4f4f4; border: 1px solid #d6d6d6; border-radius: 16px; padding: 6px 14px; cursor: pointer; font-size: 1.2rem; }
+.etf-review-filters .etf-filter.active { background: #1979c3; color: #fff; border-color: #1979c3; }
+.etf-review-filters .etf-sort { margin-left: auto; }
+
+/* Items */
+.etf-review-item { padding: 16px 0; border-bottom: 1px solid #eee; list-style: none; }
+.etf-review-item .review-title strong { font-size: 1.5rem; }
+
+/* Badges */
+.etf-badge { display: inline-block; font-size: 1.1rem; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+.etf-badge-verified { background: #e6f4ea; color: #1a7f37; }
+.etf-badge-recommend { background: #e8f0fe; color: #1967d2; }
+.etf-badge-store { background: #fff4e5; color: #b06000; }
+
+/* Pros & Cons */
+.etf-proscons { display: flex; gap: 24px; margin: 10px 0; flex-wrap: wrap; }
+.etf-proscons-title { font-weight: 700; display: block; margin-bottom: 4px; }
+.etf-pros .etf-proscons-title { color: #1a7f37; }
+.etf-cons .etf-proscons-title { color: #c5221f; }
+.etf-proscons ul { margin: 0; padding-left: 18px; }
+
+/* Media gallery */
+.etf-media-gallery { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.etf-media-item { width: 90px; height: 90px; object-fit: cover; border-radius: 6px; overflow: hidden; display: inline-block; }
+.etf-media-item img { width: 100%; height: 100%; object-fit: cover; }
+video.etf-media-item { background: #000; }
+
+/* Helpful */
+.etf-helpful { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.etf-helpful button { background: #f4f4f4; border: 1px solid #d6d6d6; border-radius: 14px; padding: 4px 12px; cursor: pointer; }
+.etf-helpful-label { color: #777; font-size: 1.2rem; }
+
+/* Comments */
+.etf-comments { margin-top: 12px; padding-left: 16px; border-left: 3px solid #eee; }
+.etf-comment { margin-bottom: 8px; }
+.etf-comment-admin { background: #fafafa; padding: 8px; border-radius: 6px; }
+.etf-comment-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.etf-comment-input { flex: 1; min-width: 200px; }
+
+/* Media preview (form) */
+.etf-media-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.etf-preview-item { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; }
+
+/* Q&A */
+.etf-qa-list { margin: 0 0 16px; padding: 0; }
+.etf-qa-item { list-style: none; padding: 12px 0; border-bottom: 1px solid #eee; }
+.etf-q-mark { display: inline-block; font-weight: 700; color: #1979c3; margin-right: 8px; }
+.etf-q-meta { color: #777; font-size: 1.2rem; margin-top: 4px; }
+.etf-qa-form { margin-top: 16px; }
+.etf-qa-input { width: 100%; }
+.etf-qa-message.etf-success { color: #1a7f37; margin-top: 8px; }
+.etf-qa-message.etf-error { color: #c5221f; margin-top: 8px; }
+
+/* Translation (Claude) */
+.etf-translate { margin-top: 8px; }
+.etf-translate-btn {
+    background: none; border: 1px solid #d1d1d1; border-radius: 16px;
+    padding: 3px 12px; font-size: 1.2rem; color: #1979c3; cursor: pointer;
+}
+.etf-translate-btn:hover { border-color: #1979c3; }
+.etf-translate-btn[disabled] { opacity: .6; cursor: default; }
+.etf-translate-btn:before { content: "\1F310"; margin-right: 5px; }
+.etf-translate-status { margin-left: 8px; font-size: 1.2rem; color: #777; }
+
+/* Video reviews — poster tile + lightbox */
+.etf-media-video {
+    position: relative; width: 90px; height: 90px; border: none; cursor: pointer;
+    border-radius: 8px; overflow: hidden;
+    background: #1d1d1d radial-gradient(circle at center, #333 0%, #111 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.etf-media-video:hover { outline: 2px solid #1979c3; }
+.etf-play-icon {
+    color: #fff; font-size: 22px; line-height: 1;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center;
+    padding-left: 3px;
+}
+.etf-video-lightbox {
+    position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, .8);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.etf-video-lightbox-inner { position: relative; max-width: 880px; width: 100%; }
+.etf-video-player { width: 100%; max-height: 80vh; border-radius: 8px; background: #000; display: block; }
+.etf-video-close {
+    position: absolute; top: -38px; right: 0; background: none; border: none;
+    color: #fff; font-size: 30px; line-height: 1; cursor: pointer;
+}

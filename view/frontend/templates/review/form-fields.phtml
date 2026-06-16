@@ -1,0 +1,91 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — extra review form fields
+ *
+ * Injected into the core review form via the
+ * "product.review.form.fields.before" container.
+ *
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+/** @var \ETechFlow\AdvancedProductReviews\ViewModel\ReviewData $vm */
+$vm = $block->getEtfViewModel();
+if (!$vm || !$vm->isEnabled()) {
+    return;
+}
+$cfg = $vm->getConfig();
+$showProsCons = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_PROS_CONS);
+$showRecommend = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_RECOMMEND);
+$showImages = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_IMAGES);
+$showVideos = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_VIDEOS);
+$accept = [];
+if ($showImages) {
+    $accept[] = 'image/*';
+}
+if ($showVideos) {
+    foreach ($vm->getConfig()->getAllowedVideoTypes() as $ext) {
+        $accept[] = '.' . $ext;
+    }
+}
+?>
+<div class="etf-review-extra-fields">
+    <?php if ($showProsCons): ?>
+        <div class="field etf-pros">
+            <label class="label" for="etf_pros"><span><?= $escaper->escapeHtml(__('Pros')) ?></span></label>
+            <div class="control">
+                <textarea name="etf_pros" id="etf_pros" rows="2"
+                          placeholder="<?= $escaper->escapeHtmlAttr(__('One per line')) ?>"></textarea>
+            </div>
+        </div>
+        <div class="field etf-cons">
+            <label class="label" for="etf_cons"><span><?= $escaper->escapeHtml(__('Cons')) ?></span></label>
+            <div class="control">
+                <textarea name="etf_cons" id="etf_cons" rows="2"
+                          placeholder="<?= $escaper->escapeHtmlAttr(__('One per line')) ?>"></textarea>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($showRecommend): ?>
+        <div class="field choice etf-recommend">
+            <input type="checkbox" name="etf_recommend" id="etf_recommend" value="1" class="checkbox"/>
+            <label class="label" for="etf_recommend">
+                <span><?= $escaper->escapeHtml(__('I recommend this product')) ?></span>
+            </label>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($showImages || $showVideos): ?>
+        <div class="field etf-media">
+            <label class="label" for="etf_media">
+                <span>
+                    <?php if ($showImages && $showVideos): ?>
+                        <?= $escaper->escapeHtml(__('Add photos or videos')) ?>
+                    <?php elseif ($showVideos): ?>
+                        <?= $escaper->escapeHtml(__('Add videos')) ?>
+                    <?php else: ?>
+                        <?= $escaper->escapeHtml(__('Add photos')) ?>
+                    <?php endif; ?>
+                </span>
+            </label>
+            <div class="control">
+                <input type="file" name="etf_media[]" id="etf_media" multiple
+                       accept="<?= $escaper->escapeHtmlAttr(implode(',', $accept)) ?>"/>
+                <div class="etf-media-preview" data-role="etf-media-preview"></div>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "#review-form": {
+            "ETechFlow_AdvancedProductReviews/js/review-enhance": {
+                "previewSelector": "[data-role=etf-media-preview]",
+                "fileSelector": "#etf_media"
+            }
+        }
+    }
+</script>
