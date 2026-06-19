@@ -47,7 +47,7 @@ class LicenseValidator
     public const XML_PATH_BUNDLE_LICENSE_KEY = 'etechflow_bundle/license/license_key';
 
     // ── portal ──────────────────────────────────────────────────────────────
-    private const DEFAULT_PORTAL_URL   = 'https://YOUR-LICENSE-PORTAL.example.com/license/validate';
+    private const DEFAULT_PORTAL_URL   = 'https://license-service.etechflow.com/license/validate';
     public  const PORTAL_CACHE_TTL     = 30;   // 30 s — suspensions apply within 30 s
     public  const PORTAL_CACHE_TTL_BAD = 60;   // 60 s  — re-check quickly after block lifted
 
@@ -61,10 +61,10 @@ class LicenseValidator
     // NOTE: Secret fragments are REDACTED in this published copy. Replace with
     // the real per-module fragments before deploying (kept out of source control).
     private const SECRET_FRAGMENTS = [
-        'REDACTED-MODULE-FRAGMENT-1',
-        'REDACTED-MODULE-FRAGMENT-2',
-        'REDACTED-MODULE-FRAGMENT-3',
-        'REDACTED-MODULE-FRAGMENT-4',
+        'pL5vRm8kNqX2',
+        'tK9aZw3jFh7e',
+        'nU4cBg6sYp1d',
+        'xQ2mDs8rVt5j',
     ];
 
     // ── HMAC — shared bundle (MUST be identical in every eTechFlow module) ──
