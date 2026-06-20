@@ -1,138 +1,235 @@
 <?php
 /**
- * ETechFlow_AdvancedProductReviews — Review Analytics Dashboard
+ * ETechFlow_AdvancedProductReviews — Analytics Dashboard
  *
  * @var \ETechFlow\AdvancedProductReviews\Block\Adminhtml\Analytics\Dashboard $block
  * @var \Magento\Framework\Escaper $escaper
- * @author ETechFlow <etechflow0@gmail.com>
  */
-
-$kpis = $block->getKpis();
-$topProducts = $block->getTopProducts();
-$distributionJson = $block->getRatingDistributionJson();
-$trendJson = $block->getTrendJson();
-
-$cards = [
-    ['label' => __('Total Reviews'), 'value' => $kpis['total'], 'mod' => 'total'],
-    ['label' => __('Avg. Rating'), 'value' => number_format((float) $kpis['avg_rating'], 2) . ' ★', 'mod' => 'rating'],
-    ['label' => __('Pending Approval'), 'value' => $kpis['pending'], 'mod' => 'pending'],
-    ['label' => __('Approved'), 'value' => $kpis['approved'], 'mod' => 'approved'],
-    ['label' => __('Would Recommend'), 'value' => $kpis['recommend_rate'] . '%', 'mod' => 'recommend'],
-    ['label' => __('Verified Buyers'), 'value' => $kpis['verified_rate'] . '%', 'mod' => 'verified'],
-    ['label' => __('With Photos/Videos'), 'value' => $kpis['with_media'], 'mod' => 'media'],
-    ['label' => __('Video Reviews'), 'value' => $kpis['video_count'], 'mod' => 'video'],
-];
-
-// Max for distribution bar scaling.
-$dist = $block->getDashboardData()['rating_distribution'];
-$distMax = max(1, max($dist));
+$kpis      = $block->getKpis();
+$dist      = $block->getDashboardData()['rating_distribution'];   // [5=>N, 4=>N, ...]
+$distMax   = max(1, !empty($dist) ? max($dist) : 1);
+$trend     = json_decode($block->getTrendJson(), true) ?: [];
+$top       = $block->getTopProducts();
+$chartId   = 'etf-apr-trend-' . uniqid();
 ?>
+<style>
+.etf-analytics{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#333;padding:0 0 40px}
+.etf-kpi-grid{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:28px}
+.etf-kpi-card{flex:1 1 150px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;
+              padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06);min-width:0}
+.etf-kpi-value{display:block;font-size:26px;font-weight:700;color:#1a73e8;line-height:1}
+.etf-kpi-label{display:block;font-size:11px;color:#777;margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+.etf-kpi-pending .etf-kpi-value{color:#e67e22}
+.etf-kpi-approved .etf-kpi-value{color:#27ae60}
+.etf-analytics-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.etf-panel{background:#fff;border:1px solid #e0e0e0;border-radius:8px;
+           padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.06);flex:1 1 280px;min-width:0}
+.etf-panel-title{margin:0 0 16px;font-size:14px;font-weight:600;color:#444;
+                 border-bottom:1px solid #f0f0f0;padding-bottom:10px}
+.etf-bars{}
+.etf-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.etf-bar-label{width:34px;text-align:right;color:#555;flex-shrink:0;font-weight:600}
+.etf-bar-track{flex:1;background:#f4f4f4;border-radius:4px;height:14px;overflow:hidden}
+.etf-bar-fill{display:block;height:14px;border-radius:4px;background:linear-gradient(90deg,#fbbc04,#f29900);transition:width .4s}
+.etf-bar-count{width:28px;color:#666;font-weight:600;text-align:right}
+.etf-top-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.etf-top-tbl th{text-align:left;padding:8px 10px;background:#f8f8f8;color:#555;font-weight:600;
+                border-bottom:2px solid #e8e8e8;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.etf-top-tbl td{padding:9px 10px;border-bottom:1px solid #f2f2f2;color:#444}
+.etf-top-tbl tr:last-child td{border-bottom:none}
+.etf-badge{display:inline-block;background:#e8f0fe;color:#1a73e8;border-radius:20px;
+           padding:2px 10px;font-size:12px;font-weight:600}
+.etf-chart-wrap{position:relative;width:100%;height:220px}
+.etf-chart-wrap canvas{display:block}
+</style>
+
 <div class="etf-analytics">
 
-    <!-- ===================== KPI CARDS ===================== -->
-    <div class="etf-kpi-grid">
-        <?php foreach ($cards as $card): ?>
-            <div class="etf-kpi-card etf-kpi-<?= $escaper->escapeHtmlAttr($card['mod']) ?>">
-                <span class="etf-kpi-value"><?= $escaper->escapeHtml((string) $card['value']) ?></span>
-                <span class="etf-kpi-label"><?= $escaper->escapeHtml((string) $card['label']) ?></span>
-            </div>
-        <?php endforeach; ?>
+<!-- KPI Cards -->
+<div class="etf-kpi-grid">
+    <div class="etf-kpi-card etf-kpi-total">
+        <span class="etf-kpi-value"><?= (int)($kpis['total'] ?? 0) ?></span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Total Reviews')) ?></span>
     </div>
-
-    <div class="etf-analytics-row">
-        <!-- ===================== RATING DISTRIBUTION ===================== -->
-        <section class="etf-panel">
-            <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Rating Distribution')) ?></h2>
-            <div class="etf-bars">
-                <?php for ($star = 5; $star >= 1; $star--): ?>
-                    <?php $count = (int) ($dist[$star] ?? 0); ?>
-                    <?php $pct = (int) round(($count / $distMax) * 100); ?>
-                    <div class="etf-bar-row">
-                        <span class="etf-bar-label"><?= (int) $star ?> ★</span>
-                        <span class="etf-bar-track">
-                            <span class="etf-bar-fill" style="width: <?= (int) $pct ?>%;"></span>
-                        </span>
-                        <span class="etf-bar-count"><?= (int) $count ?></span>
-                    </div>
-                <?php endfor; ?>
-            </div>
-        </section>
-
-        <!-- ===================== MONTHLY TREND ===================== -->
-        <section class="etf-panel">
-            <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Reviews Over Time (12 months)')) ?></h2>
-            <div class="etf-trend" data-role="etf-trend"
-                 data-trend="<?= $escaper->escapeHtmlAttr($trendJson) ?>">
-                <svg class="etf-trend-svg" viewBox="0 0 600 200" preserveAspectRatio="none"
-                     role="img" aria-label="<?= $escaper->escapeHtmlAttr(__('Reviews per month')) ?>"></svg>
-                <div class="etf-trend-axis" data-role="etf-trend-axis"></div>
-            </div>
-        </section>
+    <div class="etf-kpi-card etf-kpi-rating">
+        <span class="etf-kpi-value"><?= $escaper->escapeHtml(number_format((float)($kpis['avg_rating'] ?? 0), 2)) ?> ★</span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Avg. Rating')) ?></span>
     </div>
-
-    <!-- ===================== TOP PRODUCTS ===================== -->
-    <section class="etf-panel">
-        <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Most Reviewed Products')) ?></h2>
-        <?php if (empty($topProducts)): ?>
-            <p class="etf-empty"><?= $escaper->escapeHtml(__('No reviews yet.')) ?></p>
-        <?php else: ?>
-            <table class="data-grid etf-top-table">
-                <thead>
-                    <tr>
-                        <th><?= $escaper->escapeHtml(__('Product')) ?></th>
-                        <th class="etf-num"><?= $escaper->escapeHtml(__('Reviews')) ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($topProducts as $row): ?>
-                        <tr>
-                            <td><?= $escaper->escapeHtml($row['name']) ?></td>
-                            <td class="etf-num"><?= (int) $row['count'] ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-    </section>
+    <div class="etf-kpi-card etf-kpi-pending">
+        <span class="etf-kpi-value"><?= (int)($kpis['pending'] ?? 0) ?></span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Pending Approval')) ?></span>
+    </div>
+    <div class="etf-kpi-card etf-kpi-approved">
+        <span class="etf-kpi-value"><?= (int)($kpis['approved'] ?? 0) ?></span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Approved')) ?></span>
+    </div>
+    <div class="etf-kpi-card etf-kpi-recommend">
+        <span class="etf-kpi-value"><?= (int)($kpis['recommend_rate'] ?? 0) ?>%</span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Would Recommend')) ?></span>
+    </div>
+    <div class="etf-kpi-card etf-kpi-verified">
+        <span class="etf-kpi-value"><?= (int)($kpis['verified_rate'] ?? 0) ?>%</span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Verified Buyers')) ?></span>
+    </div>
+    <?php if (!empty($kpis['with_media'])): ?>
+    <div class="etf-kpi-card etf-kpi-media">
+        <span class="etf-kpi-value"><?= (int)$kpis['with_media'] ?></span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('With Photos/Videos')) ?></span>
+    </div>
+    <?php endif; ?>
+    <?php if (!empty($kpis['video_count'])): ?>
+    <div class="etf-kpi-card etf-kpi-video">
+        <span class="etf-kpi-value"><?= (int)$kpis['video_count'] ?></span>
+        <span class="etf-kpi-label"><?= $escaper->escapeHtml(__('Video Reviews')) ?></span>
+    </div>
+    <?php endif; ?>
 </div>
 
+<div class="etf-analytics-row">
+    <!-- Rating Distribution — CSS horizontal bars -->
+    <section class="etf-panel" style="flex:0 1 300px">
+        <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Rating Distribution')) ?></h2>
+        <div class="etf-bars">
+            <?php for ($star = 5; $star >= 1; $star--): ?>
+                <?php $count = (int)($dist[$star] ?? 0); ?>
+                <div class="etf-bar-row">
+                    <span class="etf-bar-label"><?= $star ?> ★</span>
+                    <span class="etf-bar-track">
+                        <span class="etf-bar-fill"
+                              style="width:<?= $distMax > 0 ? round(($count / $distMax) * 100) : 0 ?>%"></span>
+                    </span>
+                    <span class="etf-bar-count"><?= $count ?></span>
+                </div>
+            <?php endfor; ?>
+        </div>
+    </section>
+
+    <!-- Top Reviewed Products -->
+    <?php if (!empty($top)): ?>
+    <section class="etf-panel">
+        <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Top Reviewed Products')) ?></h2>
+        <table class="etf-top-tbl">
+            <thead><tr>
+                <th><?= $escaper->escapeHtml(__('Product')) ?></th>
+                <th style="text-align:right"><?= $escaper->escapeHtml(__('Reviews')) ?></th>
+            </tr></thead>
+            <tbody>
+                <?php foreach ($top as $row): ?>
+                <tr>
+                    <td><?= $escaper->escapeHtml($row['name']) ?></td>
+                    <td style="text-align:right">
+                        <span class="etf-badge"><?= (int)$row['count'] ?></span>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </section>
+    <?php endif; ?>
+</div>
+
+<!-- Reviews Over Time — canvas line chart, properly sized -->
+<?php if (!empty($trend)): ?>
+<section class="etf-panel">
+    <h2 class="etf-panel-title"><?= $escaper->escapeHtml(__('Reviews Over Time (12 months)')) ?></h2>
+    <div class="etf-chart-wrap">
+        <canvas id="<?= $escaper->escapeHtmlAttr($chartId) ?>"></canvas>
+    </div>
+</section>
 <script>
-    require(['jquery'], function ($) {
-        'use strict';
-        var $wrap = $('[data-role=etf-trend]');
-        if (!$wrap.length) { return; }
+(function () {
+    'use strict';
+    var canvas = document.getElementById('<?= $escaper->escapeJs($chartId) ?>');
+    if (!canvas || !canvas.getContext) return;
 
-        var data = $wrap.data('trend') || [];
-        if (!data.length) { return; }
+    var trend  = <?= $block->getTrendJson() ?>;
+    var labels = trend.map(function(d){ return d.label; });
+    var counts = trend.map(function(d){ return +d.count; });
+    var maxVal = Math.max.apply(null, counts.concat([1]));
 
-        var W = 600, H = 200, padX = 10, padY = 20;
-        var counts = data.map(function (d) { return d.count; });
-        var maxVal = Math.max.apply(null, counts.concat([1]));
-        var stepX = (W - padX * 2) / Math.max(1, data.length - 1);
+    function draw() {
+        var wrap = canvas.parentElement;
+        var W = wrap.offsetWidth  || 600;
+        var H = wrap.offsetHeight || 220;
+        canvas.width  = W;
+        canvas.height = H;
+        canvas.style.width  = W + 'px';
+        canvas.style.height = H + 'px';
 
-        var points = data.map(function (d, i) {
-            var x = padX + i * stepX;
-            var y = H - padY - (d.count / maxVal) * (H - padY * 2);
-            return {x: x, y: y, d: d};
+        var ctx = canvas.getContext('2d');
+        var padL = 44, padR = 20, padT = 16, padB = 38;
+        var plotW = W - padL - padR;
+        var plotH = H - padT - padB;
+        var n = labels.length;
+        if (n < 1) return;
+
+        ctx.clearRect(0, 0, W, H);
+
+        /* Grid + Y labels */
+        var gridLines = 4;
+        for (var g = 0; g <= gridLines; g++) {
+            var gy = padT + plotH - (g / gridLines) * plotH;
+            ctx.beginPath();
+            ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1;
+            ctx.moveTo(padL, gy); ctx.lineTo(padL + plotW, gy); ctx.stroke();
+            ctx.fillStyle = '#999';
+            ctx.font = '11px -apple-system,sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(Math.round((g / gridLines) * maxVal), padL - 6, gy + 4);
+        }
+
+        if (n < 2) return;
+
+        var pts = counts.map(function(v, i) {
+            return {
+                x: padL + (i / (n - 1)) * plotW,
+                y: padT + plotH - (v / maxVal) * plotH
+            };
         });
 
-        var line = points.map(function (p) { return p.x + ',' + p.y; }).join(' ');
-        var area = padX + ',' + (H - padY) + ' ' + line + ' ' + (padX + (data.length - 1) * stepX) + ',' + (H - padY);
+        /* X labels — up to 8 */
+        ctx.fillStyle = '#888'; ctx.font = '11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+        var step = Math.max(1, Math.ceil(n / 8));
+        for (var i = 0; i < n; i += step) {
+            ctx.fillText(labels[i], pts[i].x, H - padB + 16);
+        }
 
-        var svg = '';
-        svg += '<polygon class="etf-trend-area" points="' + area + '"/>';
-        svg += '<polyline class="etf-trend-line" points="' + line + '"/>';
-        points.forEach(function (p) {
-            svg += '<circle class="etf-trend-dot" cx="' + p.x + '" cy="' + p.y + '" r="3"><title>'
-                + p.d.label + ': ' + p.d.count + '</title></circle>';
-        });
-        $wrap.find('.etf-trend-svg').html(svg);
+        /* Gradient fill */
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j].x, pts[j].y);
+        ctx.lineTo(pts[pts.length - 1].x, padT + plotH);
+        ctx.lineTo(pts[0].x, padT + plotH);
+        ctx.closePath();
+        var grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+        grad.addColorStop(0, 'rgba(26,115,232,.15)');
+        grad.addColorStop(1, 'rgba(26,115,232,.01)');
+        ctx.fillStyle = grad; ctx.fill();
 
-        // Sparse x-axis labels (first, middle, last).
-        var axis = '';
-        [0, Math.floor(data.length / 2), data.length - 1].forEach(function (i) {
-            axis += '<span>' + data[i].label + '</span>';
-        });
-        $wrap.find('[data-role=etf-trend-axis]').html(axis);
-    });
+        /* Line */
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (var k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+        ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round'; ctx.stroke();
+
+        /* Dots */
+        for (var p = 0; p < pts.length; p++) {
+            ctx.beginPath();
+            ctx.arc(pts[p].x, pts[p].y, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#1a73e8'; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', draw);
+    } else {
+        requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', function(){ requestAnimationFrame(draw); });
+}());
 </script>
+<?php endif; ?>
+
+</div>
