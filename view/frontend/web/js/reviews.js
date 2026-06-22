@@ -15,6 +15,14 @@ define(['jquery', 'mage/translate'], function ($, $t) {
         var commentUrl = $root.data('comment-url');
         var translateUrl = $root.data('translate-url');
 
+        // "Write a review" CTA in the summary -> scroll to the review form and focus it.
+        $root.on('click', '[data-role=etf-write-review]', function () {
+            var $form = $('#review-form');
+            if (!$form.length) { return; }
+            $('html, body').animate({ scrollTop: $form.offset().top - 80 }, 400);
+            $form.find('input[name="nickname"], textarea[name="detail"]').first().trigger('focus');
+        });
+
         /**
          * Escape a plain string for safe insertion as HTML text.
          * @param {string} str
@@ -47,16 +55,14 @@ define(['jquery', 'mage/translate'], function ($, $t) {
             }
         }
 
-        // ---------------- Helpful voting ----------------
+        // ---------------- Helpful voting (with toggle support) ----------------
         $root.on('click', '[data-role=etf-helpful] button', function () {
             var $btn = $(this);
             var $item = $btn.closest('.etf-review-item');
             var reviewId = $item.data('review-id');
             var helpful = $btn.data('helpful');
+            var currentVote = $item.data('user-vote'); // Track what user voted: 'helpful', 'not_helpful', or undefined
 
-            if ($item.data('voted')) {
-                return;
-            }
             $.ajax({
                 url: voteUrl,
                 type: 'POST',
@@ -65,10 +71,28 @@ define(['jquery', 'mage/translate'], function ($, $t) {
                 showLoader: false
             }).done(function (res) {
                 if (res.success) {
-                    $item.data('voted', true);
+                    // Update counts
                     $item.find('[data-role=helpful-count]').text(res.helpful_count);
                     $item.find('[data-role=nothelpful-count]').text(res.not_helpful_count);
                     $item.attr('data-helpful', res.helpful_count);
+
+                    // Handle different response types
+                    if (res.removed) {
+                        // Vote was removed (toggled off)
+                        $item.data('user-vote', null);
+                        $item.find('[data-role=etf-helpful] button').removeClass('voted');
+                    } else if (res.changed) {
+                        // Vote was changed from one to another
+                        var voteType = helpful ? 'helpful' : 'not_helpful';
+                        $item.data('user-vote', voteType);
+                        $item.find('[data-role=etf-helpful] button').removeClass('voted');
+                        $btn.addClass('voted');
+                    } else {
+                        // New vote was added
+                        var voteType = helpful ? 'helpful' : 'not_helpful';
+                        $item.data('user-vote', voteType);
+                        $btn.addClass('voted');
+                    }
                 } else if (res.message) {
                     alert(res.message);
                 }
@@ -79,16 +103,39 @@ define(['jquery', 'mage/translate'], function ($, $t) {
         $root.on('submit', '[data-role=etf-comment-form]', function (e) {
             e.preventDefault();
             var $form = $(this);
+            var $container = $form.closest('[data-role=etf-comments]');
+
             $.ajax({
                 url: commentUrl,
                 type: 'POST',
                 dataType: 'json',
                 data: $form.serialize(),
-                showLoader: true
+                showLoader: false
             }).done(function (res) {
+                // Replace any previous status message for this thread.
+                $container.find('.etf-comment-message').remove();
                 var $msg = $('<div class="etf-comment-message"></div>').text(res.message || '');
                 $form.after($msg);
+
                 if (res.success) {
+                    // Append the new comment inline (only when it's approved and
+                    // the server returned it) so the user sees it without reload.
+                    if (res.approved && res.comment) {
+                        var $list = $container.find('.etf-comments-list');
+                        if (!$list.length) {
+                            $list = $('<div class="etf-comments-list"></div>');
+                            $container.prepend($list);
+                        }
+                        var c = res.comment;
+                        var $node = $('<div></div>')
+                            .addClass('etf-comment' + (c.is_admin_reply ? ' etf-comment-admin' : ''));
+                        $('<strong></strong>').text(c.author_name || '').appendTo($node);
+                        if (c.is_admin_reply) {
+                            $('<span class="etf-badge etf-badge-store"></span>').text($t('Store')).appendTo($node);
+                        }
+                        $('<p></p>').html(escapeHtml(c.comment).replace(/\n/g, '<br>')).appendTo($node);
+                        $list.append($node);
+                    }
                     $form[0].reset();
                 }
             });
@@ -124,6 +171,7 @@ define(['jquery', 'mage/translate'], function ($, $t) {
 
             $btn.prop('disabled', true);
             $status.text($t('Translating…'));
+
             $.ajax({
                 url: translateUrl,
                 type: 'POST',
@@ -155,12 +203,14 @@ define(['jquery', 'mage/translate'], function ($, $t) {
                 });
                 $item.data('etf-originals', originals);
             }
+
             $item.find('[data-role=etf-translatable]').each(function () {
                 var field = $(this).data('field');
                 if (res[field]) {
                     applyField($(this), field, res[field]);
                 }
             });
+
             $btn.data('state', 'translated').text($btn.data('label-original'));
             $status.text('');
         }
@@ -178,14 +228,13 @@ define(['jquery', 'mage/translate'], function ($, $t) {
          * @param {string} src
          */
         function openVideoLightbox(src) {
-            var $overlay = $(
-                '<div class="etf-video-lightbox" data-role="etf-video-lightbox">' +
-                    '<div class="etf-video-lightbox-inner">' +
-                        '<button type="button" class="etf-video-close" aria-label="' + $t('Close') + '">&times;</button>' +
-                        '<video class="etf-video-player" controls autoplay playsinline></video>' +
-                    '</div>' +
-                '</div>'
-            );
+            var $overlay = $('<div class="etf-video-lightbox" data-role="etf-video-lightbox">' +
+                '<div class="etf-video-lightbox-inner">' +
+                '<button type="button" class="etf-video-close" aria-label="' + $t('Close') + '">&times;</button>' +
+                '<video class="etf-video-player" controls autoplay playsinline></video>' +
+                '</div>' +
+                '</div>');
+
             $overlay.find('.etf-video-player').attr('src', src);
             $('body').append($overlay);
 
@@ -201,7 +250,47 @@ define(['jquery', 'mage/translate'], function ($, $t) {
                     close();
                 }
             });
+
             $(document).on('keyup.etfVideo', function (e) {
+                if (e.keyCode === 27) { close(); }
+            });
+        }
+
+        // ---------------- Image lightbox ----------------
+        $root.on('click', '[data-role=etf-gallery] .etf-media-image', function (e) {
+            e.preventDefault();
+            var src = $(this).attr('href') || $(this).find('img').attr('src');
+            if (!src) { return; }
+            openImageLightbox(src);
+        });
+
+        /**
+         * Open a modal overlay showing the full-size review image.
+         * @param {string} src
+         */
+        function openImageLightbox(src) {
+            var $overlay = $('<div class="etf-image-lightbox" data-role="etf-image-lightbox">' +
+                '<div class="etf-image-lightbox-inner">' +
+                '<button type="button" class="etf-image-close" aria-label="' + $t('Close') + '">&times;</button>' +
+                '<img class="etf-image-full" alt="" />' +
+                '</div>' +
+                '</div>');
+
+            $overlay.find('.etf-image-full').attr('src', src);
+            $('body').append($overlay);
+
+            function close() {
+                $overlay.remove();
+                $(document).off('keyup.etfImage');
+            }
+
+            $overlay.on('click', function (e) {
+                if (e.target === $overlay[0] || $(e.target).hasClass('etf-image-close')) {
+                    close();
+                }
+            });
+
+            $(document).on('keyup.etfImage', function (e) {
                 if (e.keyCode === 27) { close(); }
             });
         }
@@ -210,6 +299,7 @@ define(['jquery', 'mage/translate'], function ($, $t) {
         $root.on('click', '[data-role=etf-filters] .etf-filter', function () {
             var $btn = $(this);
             var filter = $btn.data('filter');
+
             $btn.addClass('active').siblings('.etf-filter').removeClass('active');
 
             $root.find('.etf-review-item').each(function () {
@@ -237,6 +327,7 @@ define(['jquery', 'mage/translate'], function ($, $t) {
                 }
                 return 0; // 'date' = keep server order (already newest first)
             });
+
             $.each($items, function (i, li) {
                 $list.append(li);
             });

@@ -47,9 +47,39 @@
                     <config_path>etechflow_bundle/license/license_key</config_path>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
-</group>
+                <field id="production_environment" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Production Environment</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[<strong>Yes</strong> — live store; license enforced. <strong>No</strong> — dev/staging; licensing bypassed. Common dev hosts auto-detect.]]></comment>
+                </field>
+            </group>
 
-<!-- ===================== GENERAL ===================== -->
+            <!-- ===================== PAYMENT (PADDLE) ===================== -->
+            <group id="payment" translate="label" type="text" sortOrder="6"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Payment Settings (legacy Stripe — no longer used)</label>
+                <comment><![CDATA[Legacy Stripe keys. No longer required: licence payments now run on module.etechflow.com via Paddle. Safe to leave blank.]]></comment>
+                <field id="stripe_secret_key" translate="label comment" type="obscure" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stripe Secret Key</label>
+                    <comment><![CDATA[Your Stripe secret key (sk_test_... or sk_live_...).]]></comment>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="stripe_publishable_key" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stripe Publishable Key</label>
+                    <comment><![CDATA[Your Stripe publishable key (pk_test_... or pk_live_...).]]></comment>
+                </field>
+                <field id="stripe_currency" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Currency</label>
+                    <comment><![CDATA[3-letter ISO currency code, e.g. usd, gbp, eur. Default: usd]]></comment>
+                    <validate>validate-length maximum-length-3</validate>
+                </field>
+            </group>
+
+            <!-- ===================== GENERAL ===================== -->
             <group id="general" translate="label" type="text" sortOrder="10"
                    showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General</label>

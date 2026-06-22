@@ -52,6 +52,9 @@ class Submit implements HttpPostActionInterface
     {
         $result = $this->resultJsonFactory->create();
         try {
+            if (!$this->config->isEnabled()) {
+                throw new LocalizedException(__('Reviews are unavailable.'));
+            }
             if (!$this->config->isFlag(Config::XML_PATH_ENABLE_QA)) {
                 throw new LocalizedException(__('Questions are disabled.'));
             }
@@ -87,7 +90,17 @@ class Submit implements HttpPostActionInterface
                 ? __('Your question has been posted.')
                 : __('Thank you! Your question is awaiting moderation.');
 
-            return $result->setData(['success' => true, 'message' => $message]);
+            // Return the saved question so the storefront can render it inline
+            // without a page reload. Only appended client-side when approved.
+            return $result->setData([
+                'success'  => true,
+                'approved' => $autoApprove,
+                'message'  => $message,
+                'question' => [
+                    'author_name' => $authorName,
+                    'question'    => $text,
+                ],
+            ]);
         } catch (LocalizedException $e) {
             return $result->setData(['success' => false, 'message' => $e->getMessage()]);
         } catch (\Exception $e) {

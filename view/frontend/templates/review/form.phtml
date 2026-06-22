@@ -1,0 +1,227 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — review form override
+ *
+ * Reorders the core review form and inlines the extra fields so the layout is:
+ *   Nickname → Summary → Review → Pros/Cons → Ratings → Recommend → Media → Submit
+ *
+ * Based on Magento_Review::form.phtml; core field markup, validation bindings
+ * and the JS init are preserved verbatim — only the order changes and the
+ * ETechFlow extra fields are added.
+ *
+ * @var \Magento\Review\Block\Form $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+/** @var \Magento\Framework\View\Element\ButtonLockManager|null $buttonLockManager */
+$buttonLockManager = $block->getData('button_lock_manager');
+
+/** @var \ETechFlow\AdvancedProductReviews\ViewModel\ReviewData $vm */
+$vm = $block->getEtfViewModel();
+$etfEnabled = $vm && $vm->isEnabled();
+
+$showProsCons  = $etfEnabled && $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_PROS_CONS);
+$showRecommend = $etfEnabled && $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_RECOMMEND);
+$showImages    = $etfEnabled && $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_IMAGES);
+$showVideos    = $etfEnabled && $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_VIDEOS);
+
+// "Require Purchase to Review": show a notice always, and a buyer-email field for guests
+// (logged-in customers are matched by account; the gate is enforced server-side on submit).
+$purchaseRequired = $etfEnabled && $vm->isPurchaseRequired();
+$showBuyerEmail   = $purchaseRequired && !$vm->isLoggedIn();
+
+$accept = [];
+if ($showImages) {
+    $accept[] = 'image/*';
+}
+if ($showVideos) {
+    foreach ($vm->getConfig()->getAllowedVideoTypes() as $ext) {
+        $accept[] = '.' . $ext;
+    }
+}
+//phpcs:disable Generic.Files.LineLength
+?>
+<div class="block review-add">
+    <div class="block-title"><strong><?= $escaper->escapeHtml(__('Write Your Own Review')) ?></strong></div>
+<div class="block-content">
+<?php if ($block->getAllowWriteReviewFlag()):?>
+<form action="<?= $escaper->escapeUrl($block->getAction()) ?>" class="review-form" method="post" id="review-form" data-role="product-review-form" data-bind="scope: 'review-form'">
+    <?= $block->getBlockHtml('formkey') ?>
+    <fieldset class="fieldset review-fieldset" data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>">
+        <legend class="legend review-legend"><span><?= $escaper->escapeHtml(__("You're reviewing:")) ?></span><strong><?= $escaper->escapeHtml($block->getProductInfo()->getName()) ?></strong></legend><br />
+
+        <?php if ($purchaseRequired): ?>
+            <!-- Purchase-required notice -->
+            <div class="message info etf-review-notice" data-role="etf-purchase-notice">
+                <span><?= $escaper->escapeHtml(__('Only verified buyers who purchased this product can submit a review.')) ?></span>
+            </div>
+        <?php endif; ?>
+
+        <!-- 1. Nickname -->
+        <div class="field review-field-nickname required">
+            <label for="nickname_field" class="label"><span><?= $escaper->escapeHtml(__('Nickname')) ?></span></label>
+            <div class="control">
+                <input type="text" name="nickname" id="nickname_field" class="input-text" data-validate="{required:true}" data-bind="value: nickname()" />
+            </div>
+        </div>
+
+        <?php if ($showBuyerEmail): ?>
+            <!-- Verified-buyer email (guests only, when purchase is required) -->
+            <div class="field review-field-email required etf-buyer-email">
+                <label for="etf_email" class="label"><span><?= $escaper->escapeHtml(__('Email used at checkout')) ?></span></label>
+                <div class="control">
+                    <input type="email" name="etf_email" id="etf_email" class="input-text" autocomplete="email"
+                           data-validate="{required:true, 'validate-email':true}"
+                           placeholder="<?= $escaper->escapeHtmlAttr(__('you@example.com')) ?>" />
+                    <div class="note"><?= $escaper->escapeHtml(__('We use this only to confirm your purchase of this product.')) ?></div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- 2. Summary -->
+        <div class="field review-field-summary required">
+            <label for="summary_field" class="label"><span><?= $escaper->escapeHtml(__('Summary')) ?></span></label>
+            <div class="control">
+                <input type="text" name="title" id="summary_field" class="input-text" data-validate="{required:true}" data-bind="value: review().title" />
+            </div>
+        </div>
+
+        <!-- 3. Review -->
+        <div class="field review-field-text required">
+            <label for="review_field" class="label"><span><?= $escaper->escapeHtml(__('Review')) ?></span></label>
+            <div class="control">
+                <textarea name="detail" id="review_field" cols="5" rows="3" data-validate="{required:true}" data-bind="value: review().detail"></textarea>
+            </div>
+        </div>
+
+        <!-- 4. Pros / Cons -->
+        <?php if ($showProsCons): ?>
+            <div class="field etf-pros">
+                <label class="label" for="etf_pros"><span><?= $escaper->escapeHtml(__('Pros')) ?></span></label>
+                <div class="control">
+                    <textarea name="etf_pros" id="etf_pros" rows="2"
+                              placeholder="<?= $escaper->escapeHtmlAttr(__('One per line')) ?>"></textarea>
+                </div>
+            </div>
+            <div class="field etf-cons">
+                <label class="label" for="etf_cons"><span><?= $escaper->escapeHtml(__('Cons')) ?></span></label>
+                <div class="control">
+                    <textarea name="etf_cons" id="etf_cons" rows="2"
+                              placeholder="<?= $escaper->escapeHtmlAttr(__('One per line')) ?>"></textarea>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- 5. Ratings -->
+        <?php if ($block->getRatings() && $block->getRatings()->getSize()): ?>
+        <span id="input-message-box"></span>
+        <fieldset class="field required review-field-ratings">
+            <legend class="label"><span><?= $escaper->escapeHtml(__('Your Rating')) ?></span></legend><br/>
+            <div class="control">
+                <div class="nested" id="product-review-table">
+                    <?php foreach ($block->getRatings() as $_rating): ?>
+                        <div class="field choice review-field-rating">
+                            <label class="label" id="<?= $escaper->escapeHtml($_rating->getRatingCode()) ?>_rating_label"><span><?= $escaper->escapeHtml($_rating->getRatingCode()) ?></span></label>
+                            <div class="control review-control-vote">
+                            <?php $options = $_rating->getOptions();?>
+                            <?php $iterator = 1; foreach ($options as $_option): ?>
+                                <input
+                                    type="radio"
+                                    name="ratings[<?= $escaper->escapeHtmlAttr($_rating->getId()) ?>]"
+                                    id="<?= $escaper->escapeHtmlAttr($_rating->getRatingCode()) ?>_<?= $escaper->escapeHtmlAttr($_option->getValue()) ?>"
+                                    value="<?= $escaper->escapeHtmlAttr($_option->getId()) ?>"
+                                    class="radio"
+                                    data-validate="{'rating-required':true}"
+                                    aria-labelledby="<?= $escaper->escapeHtmlAttr($_rating->getRatingCode()) ?>_rating_label <?= $escaper->escapeHtmlAttr($_rating->getRatingCode()) ?>_<?= $escaper->escapeHtmlAttr($_option->getValue()) ?>_label" />
+                                <label
+                                    class="rating-<?= $escaper->escapeHtmlAttr($iterator) ?>"
+                                    for="<?= $escaper->escapeHtmlAttr($_rating->getRatingCode()) ?>_<?= $escaper->escapeHtmlAttr($_option->getValue()) ?>"
+                                    title="<?= $escaper->escapeHtmlAttr(__('%1 %2', $iterator, $iterator > 1 ? __('stars') : __('star'))) ?>"
+                                    id="<?= $escaper->escapeHtmlAttr($_rating->getRatingCode()) ?>_<?= $escaper->escapeHtmlAttr($_option->getValue()) ?>_label">
+                                    <span><?= $escaper->escapeHtml(__('%1 %2', $iterator, $iterator > 1 ? __('stars') : __('star'))) ?></span>
+                                </label>
+                                <?php $iterator++; ?>
+                            <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <input type="hidden" name="validate_rating" class="validate-rating" value="" />
+            </div>
+        </fieldset>
+        <?php endif ?>
+
+        <!-- 6. Recommend -->
+        <?php if ($showRecommend): ?>
+            <div class="field choice etf-recommend">
+                <input type="checkbox" name="etf_recommend" id="etf_recommend" value="1" class="checkbox"/>
+                <label class="label" for="etf_recommend">
+                    <span><?= $escaper->escapeHtml(__('I recommend this product')) ?></span>
+                </label>
+            </div>
+        <?php endif; ?>
+
+        <!-- 7. Add photos / videos -->
+        <?php if ($showImages || $showVideos): ?>
+            <div class="field etf-media">
+                <label class="label" for="etf_media">
+                    <span>
+                        <?php if ($showImages && $showVideos): ?>
+                            <?= $escaper->escapeHtml(__('Add photos or videos')) ?>
+                        <?php elseif ($showVideos): ?>
+                            <?= $escaper->escapeHtml(__('Add videos')) ?>
+                        <?php else: ?>
+                            <?= $escaper->escapeHtml(__('Add photos')) ?>
+                        <?php endif; ?>
+                    </span>
+                </label>
+                <div class="control">
+                    <input type="file" name="etf_media[]" id="etf_media" multiple
+                           accept="<?= $escaper->escapeHtmlAttr(implode(',', $accept)) ?>"/>
+                    <div class="etf-media-preview" data-role="etf-media-preview"></div>
+                </div>
+            </div>
+        <?php endif; ?>
+    </fieldset>
+    <fieldset class="fieldset additional_info">
+        <?= $block->getChildHtml('form_additional_review_info') ?>
+    </fieldset>
+
+    <!-- 8. Submit -->
+    <div class="actions-toolbar review-form-actions">
+        <div class="primary actions-primary">
+            <button type="submit" class="action submit primary"
+                <?php if ($buttonLockManager?->isDisabled('review_form_submit')): ?>
+                    disabled="disabled"
+                <?php endif; ?>>
+                <span><?= $escaper->escapeHtml(__('Submit Review')) ?></span>
+            </button>
+        </div>
+    </div>
+</form>
+<script type="text/x-magento-init">
+{
+    "[data-role=product-review-form]": {
+        "Magento_Ui/js/core/app": <?= /* @noEscape */ $block->getJsLayout() ?>
+    },
+    "#review-form": {
+        "Magento_Review/js/error-placement": {},
+        "Magento_Review/js/validate-review": {},
+        "Magento_Review/js/submit-review": {},
+        "ETechFlow_AdvancedProductReviews/js/review-enhance": {
+            "previewSelector": "[data-role=etf-media-preview]",
+            "fileSelector": "#etf_media"
+        }
+    }
+}
+</script>
+<?php else: ?>
+    <div class="message info notlogged" id="review-form">
+        <div>
+            <?= $escaper->escapeHtml(__('Only registered users can write reviews. Please <a href="%1">Sign in</a> or <a href="%2">create an account</a>', $block->getLoginLink(), $block->getRegisterUrl()), ['a']) ?>
+        </div>
+    </div>
+<?php endif ?>
+</div>
+</div>

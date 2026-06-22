@@ -12,24 +12,26 @@ use ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface;
 use ETechFlow\AdvancedProductReviews\Model\Config;
 use ETechFlow\AdvancedProductReviews\Model\ResourceModel\ReviewTranslation as ReviewTranslationResource;
 use ETechFlow\AdvancedProductReviews\Model\ReviewTranslationFactory;
-use ETechFlow\AdvancedProductReviews\Model\Service\Translator\ClaudeClient;
+use ETechFlow\AdvancedProductReviews\Model\Service\Translator\TranslatorPool;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Locale\ResolverInterface as LocaleResolver;
 use Magento\Review\Model\ReviewFactory;
 use Psr\Log\LoggerInterface;
 
 /**
- * Translates reviews into the storefront language via Claude, with DB caching.
+ * Translates reviews into the storefront language via the configured AI
+ * provider (OpenAI / Gemini / Anthropic), with DB caching.
  *
  * Flow: resolve target language -> return DB-cached translation if present ->
- * otherwise call Claude, persist the result, and return it. The cache table
- * has a unique (review_id, language) key so each pair is translated once.
+ * otherwise call the active provider, persist the result, and return it. The
+ * cache table has a unique (review_id, language) key so each pair is translated
+ * once.
  */
 class TranslationService
 {
     /**
      * @param Config $config
-     * @param ClaudeClient $claudeClient
+     * @param TranslatorPool $translatorPool
      * @param ReviewTranslationResource $translationResource
      * @param ReviewTranslationFactory $translationFactory
      * @param ReviewExtraRepositoryInterface $extraRepository
@@ -39,7 +41,7 @@ class TranslationService
      */
     public function __construct(
         private readonly Config $config,
-        private readonly ClaudeClient $claudeClient,
+        private readonly TranslatorPool $translatorPool,
         private readonly ReviewTranslationResource $translationResource,
         private readonly ReviewTranslationFactory $translationFactory,
         private readonly ReviewExtraRepositoryInterface $extraRepository,
@@ -90,18 +92,19 @@ class TranslationService
             throw new LocalizedException(__('This review is already in your language.'));
         }
 
-        // 4) Translate via Claude and persist.
-        $translated = $this->claudeClient->translate(
+        // 4) Translate via the configured provider and persist.
+        $provider = $this->config->getTranslationProvider($storeId);
+        $translated = $this->translatorPool->get($provider)->translate(
             $source,
             $this->languageDisplayName($language),
-            $this->config->getClaudeApiKey($storeId),
-            $this->config->getClaudeModel($storeId)
+            $this->config->getTranslationApiKey($storeId),
+            $this->config->getTranslationModel($storeId)
         );
         if (empty($translated)) {
             throw new LocalizedException(__('No translation was produced.'));
         }
 
-        $row = $this->persist($reviewId, $language, $translated);
+        $row = $this->persist($reviewId, $language, $translated, $provider);
         return $this->shape($language, $row, false);
     }
 
@@ -137,9 +140,10 @@ class TranslationService
      * @param int $reviewId
      * @param string $language
      * @param array<string,string> $translated
+     * @param string $engine Provider code that produced the translation
      * @return array<string,mixed>
      */
-    private function persist(int $reviewId, string $language, array $translated): array
+    private function persist(int $reviewId, string $language, array $translated, string $engine): array
     {
         $model = $this->translationFactory->create();
         $model->setReviewId($reviewId)
@@ -148,7 +152,7 @@ class TranslationService
             ->setTranslatedDetail($translated['detail'] ?? null)
             ->setTranslatedPros($translated['pros'] ?? null)
             ->setTranslatedCons($translated['cons'] ?? null)
-            ->setEngine('claude');
+            ->setEngine($engine);
 
         try {
             $this->translationResource->save($model);

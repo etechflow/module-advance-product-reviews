@@ -100,3 +100,54 @@ video.etf-media-item { background: #000; }
     position: absolute; top: -38px; right: 0; background: none; border: none;
     color: #fff; font-size: 30px; line-height: 1; cursor: pointer;
 }
+.etf-image-lightbox {
+    position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, .85);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.etf-image-lightbox-inner { position: relative; max-width: 880px; width: auto; }
+.etf-image-full {
+    max-width: 100%; max-height: 85vh; border-radius: 8px; background: #000;
+    display: block; box-shadow: 0 8px 40px rgba(0, 0, 0, .5);
+}
+.etf-image-close {
+    position: absolute; top: -38px; right: 0; background: none; border: none;
+    color: #fff; font-size: 30px; line-height: 1; cursor: pointer;
+}
+.etf-media-image { cursor: pointer; }
+
+/* Per-review star rating — paints the .rating-result width overlay as stars.
+   Markup: <div class="rating-result"><span style="width:NN%"></span></div> */
+.etf-stars { display: inline-block; line-height: 1; margin: 4px 0; }
+.etf-stars .rating-result {
+    position: relative;
+    display: inline-block;
+    font-size: 16px;
+    letter-spacing: 2px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #d6d6d6;
+    white-space: nowrap;
+}
+.etf-stars .rating-result::before {
+    content: "\2605\2605\2605\2605\2605";
+}
+.etf-stars .rating-result > span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    overflow: hidden;
+    width: 0;
+    color: #ffb503;
+    white-space: nowrap;
+}
+.etf-stars .rating-result > span::before {
+    content: "\2605\2605\2605\2605\2605";
+}
+
+
+/* "Write a review" CTA in the reviews summary */
+.etf-write-review-cta { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.etf-write-review-btn { background: #1979c3; color: #fff; border: none; border-radius: 3px; padding: 10px 20px; font-size: 1.4rem; font-weight: 600; line-height: 1.2; cursor: pointer; }
+.etf-write-review-btn:hover { background: #16689e; }
+.etf-write-review-hint { color: #777; font-size: 1.2rem; max-width: 180px; line-height: 1.3; }
+@media (max-width: 640px) { .etf-write-review-cta { margin-left: 0; margin-top: 12px; } }

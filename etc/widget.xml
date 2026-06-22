@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — storefront widget
+ *
+ * Lets an admin place customer reviews on any CMS page, category, or block.
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<widgets xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Widget:etc/widget.xsd">
+    <widget id="etechflow_reviews_list"
+            class="ETechFlow\AdvancedProductReviews\Block\Widget\Reviews"
+            is_email_compatible="false">
+        <label translate="true">ETechFlow — Product Reviews</label>
+        <description translate="true">Display customer reviews anywhere: the latest reviews across the store, or reviews for a specific product.</description>
+        <parameters>
+            <parameter name="title" xsi:type="text" required="false" visible="true" sort_order="10">
+                <label translate="true">Heading</label>
+                <value>Customer Reviews</value>
+            </parameter>
+            <parameter name="display_mode" xsi:type="select" required="true" visible="true" sort_order="20">
+                <label translate="true">Show</label>
+                <options>
+                    <option name="latest" value="latest" selected="true">
+                        <label translate="true">Latest reviews (whole store)</label>
+                    </option>
+                    <option name="product" value="product">
+                        <label translate="true">Reviews for a specific product</label>
+                    </option>
+                </options>
+            </parameter>
+            <parameter name="product_sku" xsi:type="text" required="false" visible="true" sort_order="30">
+                <label translate="true">Product SKU</label>
+                <description translate="true">Only used when "Reviews for a specific product" is selected. Find the SKU in Catalog &gt; Products.</description>
+                <depends>
+                    <parameter name="display_mode" value="product"/>
+                </depends>
+            </parameter>
+            <parameter name="limit" xsi:type="text" required="false" visible="true" sort_order="40">
+                <label translate="true">Number of reviews to show</label>
+                <value>5</value>
+            </parameter>
+            <parameter name="min_rating" xsi:type="select" required="false" visible="true" sort_order="50">
+                <label translate="true">Minimum rating</label>
+                <options>
+                    <option name="any" value="0" selected="true">
+                        <label translate="true">Any</label>
+                    </option>
+                    <option name="r3" value="3">
+                        <label translate="true">3 stars &amp; up</label>
+                    </option>
+                    <option name="r4" value="4">
+                        <label translate="true">4 stars &amp; up</label>
+                    </option>
+                    <option name="r5" value="5">
+                        <label translate="true">5 stars only</label>
+                    </option>
+                </options>
+            </parameter>
+            <parameter name="show_product_name" xsi:type="select" required="false" visible="true" sort_order="60">
+                <label translate="true">Show product name on each review</label>
+                <options>
+                    <option name="yes" value="1" selected="true">
+                        <label translate="true">Yes</label>
+                    </option>
+                    <option name="no" value="0">
+                        <label translate="true">No</label>
+                    </option>
+                </options>
+            </parameter>
+        </parameters>
+    </widget>
+</widgets>

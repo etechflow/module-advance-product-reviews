@@ -10,6 +10,7 @@ namespace ETechFlow\AdvancedProductReviews\Controller\Vote;
 
 use ETechFlow\AdvancedProductReviews\Api\ReviewExtraRepositoryInterface;
 use ETechFlow\AdvancedProductReviews\Model\ReviewVoteFactory;
+use ETechFlow\AdvancedProductReviews\Model\Config;
 use ETechFlow\AdvancedProductReviews\Model\ResourceModel\ReviewVote as ReviewVoteResource;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Action\HttpPostActionInterface;
@@ -38,6 +39,7 @@ class Save implements HttpPostActionInterface
     public function __construct(
         private readonly RequestInterface $request,
         private readonly JsonFactory $resultJsonFactory,
+        private readonly Config $config,
         private readonly CustomerSession $customerSession,
         private readonly ReviewVoteFactory $voteFactory,
         private readonly ReviewVoteResource $voteResource,
@@ -54,6 +56,9 @@ class Save implements HttpPostActionInterface
     {
         $result = $this->resultJsonFactory->create();
         try {
+            if (!$this->config->isEnabled()) {
+                throw new LocalizedException(__('Reviews are unavailable.'));
+            }
             $reviewId = (int) $this->request->getParam('review_id');
             $isHelpful = (bool) $this->request->getParam('helpful');
             if ($reviewId <= 0) {

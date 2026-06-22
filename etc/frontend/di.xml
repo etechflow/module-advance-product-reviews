@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * ETechFlow_AdvancedProductReviews — storefront DI
+ *
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Enforce the "Allow Guest Reviews" + "Require Purchase to Review" policy server-side. -->
+    <type name="Magento\Review\Controller\Product\Post">
+        <plugin name="etechflow_enforce_review_policy"
+                type="ETechFlow\AdvancedProductReviews\Plugin\Controller\EnforceReviewPolicy"
+                sortOrder="10"/>
+    </type>
+</config>

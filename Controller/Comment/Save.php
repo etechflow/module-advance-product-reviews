@@ -49,6 +49,9 @@ class Save implements HttpPostActionInterface
     {
         $result = $this->resultJsonFactory->create();
         try {
+            if (!$this->config->isEnabled()) {
+                throw new LocalizedException(__('Reviews are unavailable.'));
+            }
             if (!$this->config->isFlag(Config::XML_PATH_ENABLE_COMMENTS)) {
                 throw new LocalizedException(__('Comments are disabled.'));
             }
@@ -85,7 +88,18 @@ class Save implements HttpPostActionInterface
                 ? __('Your comment has been posted.')
                 : __('Thank you! Your comment is awaiting moderation.');
 
-            return $result->setData(['success' => true, 'message' => $message]);
+            // Return the saved comment so the storefront can render it inline
+            // without a page reload. Only appended client-side when approved.
+            return $result->setData([
+                'success'  => true,
+                'approved' => $autoApprove,
+                'message'  => $message,
+                'comment'  => [
+                    'author_name'    => $authorName,
+                    'comment'        => $text,
+                    'is_admin_reply' => false,
+                ],
+            ]);
         } catch (LocalizedException $e) {
             return $result->setData(['success' => false, 'message' => $e->getMessage()]);
         } catch (\Exception $e) {

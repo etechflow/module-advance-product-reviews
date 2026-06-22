@@ -56,7 +56,7 @@ class MediaUploader
     /**
      * Upload a single file from the $_FILES array under the given input id.
      *
-     * @param string|array $fileId Key in $_FILES, or [name, index] for multi-file inputs
+     * @param string|array $fileId Key in $_FILES, e.g. "etf_media[0]" for a multi-file input
      * @param int|string|null $storeId
      * @return array{type:string,file:string,mime:string}|null Null when no file present
      * @throws LocalizedException
@@ -122,7 +122,11 @@ class MediaUploader
     }
 
     /**
-     * Resolve the uploaded size in bytes for a string or [name, index] fileId.
+     * Resolve the uploaded size in bytes for the given fileId.
+     *
+     * Supports a "name[index]" string, a legacy [name, index] array, and a plain
+     * "name" string, against both the raw $_FILES layout and the per-index layout
+     * that Magento's Request::getFiles() produces for multi-file inputs.
      *
      * @param string|array $fileId
      * @return int
@@ -130,11 +134,21 @@ class MediaUploader
     private function resolveSize($fileId): int
     {
         $files = $this->request->getFiles()->toArray();
+
         if (is_array($fileId)) {
             [$name, $index] = [$fileId[0] ?? '', $fileId[1] ?? 0];
-            return (int) ($files[$name]['size'][$index] ?? 0);
+        } elseif (preg_match('/^(.*?)\[(.+)\]$/', (string) $fileId, $m)) {
+            [$name, $index] = [$m[1], $m[2]];
+        } else {
+            return (int) ($files[$fileId]['size'] ?? 0);
         }
-        return (int) ($files[$fileId]['size'] ?? 0);
+
+        // Laminas-normalized layout: $files[name][index]['size'].
+        if (isset($files[$name][$index]) && is_array($files[$name][$index])) {
+            return (int) ($files[$name][$index]['size'] ?? 0);
+        }
+        // Raw $_FILES layout: $files[name]['size'][index].
+        return (int) ($files[$name]['size'][$index] ?? 0);
     }
 
     /**

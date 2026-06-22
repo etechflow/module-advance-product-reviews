@@ -17,6 +17,10 @@
             <module name="Magento_SalesRule"/>
             <module name="Magento_Store"/>
             <module name="Magento_Ui"/>
+            <!-- Soft ordering only: when a Hyvä store has Hyva_Theme installed,
+                 load this module after it so the bundled Hyvä reviews template
+                 wins. Safely ignored on stores without Hyvä. -->
+            <module name="Hyva_Theme"/>
         </sequence>
     </module>
 </config>

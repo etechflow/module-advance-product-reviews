@@ -22,6 +22,7 @@ class Config
     /** General */
     public const XML_PATH_ENABLED = 'etechflow_reviews/general/enabled';
     public const XML_PATH_GUEST_REVIEWS = 'etechflow_reviews/general/allow_guest_reviews';
+    public const XML_PATH_PURCHASE_REQUIRED = 'etechflow_reviews/general/purchase_required';
     public const XML_PATH_AUTO_APPROVE = 'etechflow_reviews/general/auto_approve';
 
     /** Review elements */
@@ -40,11 +41,19 @@ class Config
     public const XML_PATH_MAX_VIDEO_SIZE = 'etechflow_reviews/media/max_video_size_mb';
     public const XML_PATH_ALLOWED_VIDEO_TYPES = 'etechflow_reviews/media/allowed_video_types';
 
-    /** Translation (Claude) */
+    /** Translation (multi-provider: OpenAI / Gemini / Anthropic) */
     public const XML_PATH_TRANSLATION_ENABLED = 'etechflow_reviews/translation/enabled';
-    public const XML_PATH_TRANSLATION_API_KEY = 'etechflow_reviews/translation/claude_api_key';
-    public const XML_PATH_TRANSLATION_MODEL = 'etechflow_reviews/translation/claude_model';
+    public const XML_PATH_TRANSLATION_PROVIDER = 'etechflow_reviews/translation/provider';
+    public const XML_PATH_TRANSLATION_OPENAI_KEY = 'etechflow_reviews/translation/openai_api_key';
+    public const XML_PATH_TRANSLATION_OPENAI_MODEL = 'etechflow_reviews/translation/openai_model';
+    public const XML_PATH_TRANSLATION_GEMINI_KEY = 'etechflow_reviews/translation/gemini_api_key';
+    public const XML_PATH_TRANSLATION_GEMINI_MODEL = 'etechflow_reviews/translation/gemini_model';
+    public const XML_PATH_TRANSLATION_ANTHROPIC_KEY = 'etechflow_reviews/translation/anthropic_api_key';
+    public const XML_PATH_TRANSLATION_ANTHROPIC_MODEL = 'etechflow_reviews/translation/anthropic_model';
     public const XML_PATH_TRANSLATION_AUTO = 'etechflow_reviews/translation/auto_translate';
+
+    /** Supported translation provider codes. */
+    public const TRANSLATION_PROVIDERS = ['openai', 'gemini', 'anthropic'];
 
     /** Spam / CAPTCHA */
     public const XML_PATH_CAPTCHA_ENABLED = 'etechflow_reviews/spam/captcha_enabled';
@@ -105,6 +114,28 @@ class Config
     }
 
     /**
+     * Whether guests (not-logged-in shoppers) are allowed to submit reviews.
+     *
+     * @param int|string|null $storeId
+     * @return bool
+     */
+    public function isGuestReviewsAllowed($storeId = null): bool
+    {
+        return $this->isFlag(self::XML_PATH_GUEST_REVIEWS, $storeId);
+    }
+
+    /**
+     * Whether a reviewer must have actually purchased the product first.
+     *
+     * @param int|string|null $storeId
+     * @return bool
+     */
+    public function isPurchaseRequired($storeId = null): bool
+    {
+        return $this->isFlag(self::XML_PATH_PURCHASE_REQUIRED, $storeId);
+    }
+
+    /**
      * @param int|string|null $storeId
      * @return bool
      */
@@ -114,21 +145,78 @@ class Config
     }
 
     /**
+     * Active translation provider code (openai | gemini | anthropic).
+     *
      * @param int|string|null $storeId
      * @return string
      */
-    public function getClaudeApiKey($storeId = null): string
+    public function getTranslationProvider($storeId = null): string
     {
-        return (string) $this->getValue(self::XML_PATH_TRANSLATION_API_KEY, $storeId);
+        $provider = strtolower(trim((string) $this->getValue(self::XML_PATH_TRANSLATION_PROVIDER, $storeId)));
+        return in_array($provider, self::TRANSLATION_PROVIDERS, true) ? $provider : 'openai';
     }
 
     /**
+     * Encrypted API key for the active provider.
+     *
      * @param int|string|null $storeId
      * @return string
      */
-    public function getClaudeModel($storeId = null): string
+    public function getTranslationApiKey($storeId = null): string
     {
-        return (string) ($this->getValue(self::XML_PATH_TRANSLATION_MODEL, $storeId) ?: 'claude-haiku-4-5-20251001');
+        return (string) $this->getValue($this->resolveKeyPath($this->getTranslationProvider($storeId)), $storeId);
+    }
+
+    /**
+     * Model id for the active provider, falling back to a sensible default.
+     *
+     * @param int|string|null $storeId
+     * @return string
+     */
+    public function getTranslationModel($storeId = null): string
+    {
+        $provider = $this->getTranslationProvider($storeId);
+        $model = (string) $this->getValue($this->resolveModelPath($provider), $storeId);
+        return $model !== '' ? $model : $this->defaultModel($provider);
+    }
+
+    /**
+     * @param string $provider
+     * @return string
+     */
+    private function resolveKeyPath(string $provider): string
+    {
+        return match ($provider) {
+            'gemini' => self::XML_PATH_TRANSLATION_GEMINI_KEY,
+            'anthropic' => self::XML_PATH_TRANSLATION_ANTHROPIC_KEY,
+            default => self::XML_PATH_TRANSLATION_OPENAI_KEY,
+        };
+    }
+
+    /**
+     * @param string $provider
+     * @return string
+     */
+    private function resolveModelPath(string $provider): string
+    {
+        return match ($provider) {
+            'gemini' => self::XML_PATH_TRANSLATION_GEMINI_MODEL,
+            'anthropic' => self::XML_PATH_TRANSLATION_ANTHROPIC_MODEL,
+            default => self::XML_PATH_TRANSLATION_OPENAI_MODEL,
+        };
+    }
+
+    /**
+     * @param string $provider
+     * @return string
+     */
+    private function defaultModel(string $provider): string
+    {
+        return match ($provider) {
+            'gemini' => 'gemini-2.0-flash',
+            'anthropic' => 'claude-haiku-4-5-20251001',
+            default => 'gpt-4o-mini',
+        };
     }
 
     /**

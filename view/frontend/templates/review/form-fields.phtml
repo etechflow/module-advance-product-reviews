@@ -16,6 +16,22 @@ if (!$vm || !$vm->isEnabled()) {
     return;
 }
 $cfg = $vm->getConfig();
+
+$isLoggedIn       = $vm->isLoggedIn();
+$purchaseRequired = $vm->isPurchaseRequired();
+$guestAllowed     = $vm->isGuestReviewsAllowed();
+
+// Guests who are not allowed to review: show a notice instead of the extra fields.
+// (The submission itself is also blocked server-side.)
+if (!$isLoggedIn && !$guestAllowed):
+    ?>
+    <div class="etf-review-notice message info" data-role="etf-review-notice">
+        <span><?= $escaper->escapeHtml(__('Please sign in to your account to write a review.')) ?></span>
+    </div>
+    <?php
+    return;
+endif;
+
 $showProsCons = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_PROS_CONS);
 $showRecommend = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_RECOMMEND);
 $showImages = $vm->isFlag(\ETechFlow\AdvancedProductReviews\Model\Config::XML_PATH_ENABLE_IMAGES);
@@ -31,6 +47,28 @@ if ($showVideos) {
 }
 ?>
 <div class="etf-review-extra-fields">
+    <?php if ($purchaseRequired): ?>
+        <div class="etf-review-notice message info" data-role="etf-purchase-notice">
+            <span><?= $escaper->escapeHtml(__('Only verified buyers who purchased this product can submit a review.')) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($purchaseRequired && !$isLoggedIn): ?>
+        <div class="field required etf-buyer-email">
+            <label class="label" for="etf_email">
+                <span><?= $escaper->escapeHtml(__('Email used at checkout')) ?></span>
+            </label>
+            <div class="control">
+                <input type="email" name="etf_email" id="etf_email" class="input-text"
+                       autocomplete="email"
+                       placeholder="<?= $escaper->escapeHtmlAttr(__('you@example.com')) ?>"/>
+                <div class="note"><?= $escaper->escapeHtml(
+                    __('We use this only to confirm your purchase of this product.')
+                ) ?></div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <?php if ($showProsCons): ?>
         <div class="field etf-pros">
             <label class="label" for="etf_pros"><span><?= $escaper->escapeHtml(__('Pros')) ?></span></label>

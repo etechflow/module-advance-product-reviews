@@ -23,6 +23,9 @@
         "magento/module-store": ">=101.1.0",
         "magento/module-ui": ">=101.2.0"
     },
+    "suggest": {
+        "hyva-themes/magento2-theme-module": "Install on Hyvä-themed storefronts to enable the bundled Tailwind/Alpine reviews UI. Not required on Luma or other standard themes — the module detects the active theme automatically."
+    },
     "autoload": {
         "files": [
             "registration.php"
@@ -31,5 +34,5 @@
             "ETechFlow\\AdvancedProductReviews\\": ""
         }
     },
-    "version": "1.0.0"
+    "version": "1.1.1"
 }

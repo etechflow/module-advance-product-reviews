@@ -18,14 +18,10 @@
                 <ip_blocked>0</ip_blocked>
                 <portal_url>https://license-service.etechflow.com/license/validate</portal_url>
             </license>
-            <payment>
-                <stripe_secret_key/>
-                <stripe_publishable_key/>
-                <stripe_currency>usd</stripe_currency>
-            </payment>
             <general>
                 <enabled>1</enabled>
                 <allow_guest_reviews>1</allow_guest_reviews>
+                <purchase_required>0</purchase_required>
                 <auto_approve>0</auto_approve>
             </general>
             <elements>
@@ -46,7 +42,10 @@
             </media>
             <translation>
                 <enabled>0</enabled>
-                <claude_model>claude-haiku-4-5-20251001</claude_model>
+                <provider>openai</provider>
+                <openai_model>gpt-4o-mini</openai_model>
+                <gemini_model>gemini-2.5-flash</gemini_model>
+                <anthropic_model>claude-haiku-4-5-20251001</anthropic_model>
                 <auto_translate>1</auto_translate>
             </translation>
             <spam>

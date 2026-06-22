@@ -1,8 +1,5 @@
 <?php
 declare(strict_types=1);
-/**
- * ETechFlow_AdvancedProductReviews — admin notification: pending reviews
- */
 namespace ETechFlow\AdvancedProductReviews\Model\System\Message;
 
 use Magento\Framework\App\ResourceConnection;
@@ -53,7 +50,6 @@ class PendingReviews implements MessageInterface
             try {
                 $conn        = $this->resource->getConnection();
                 $table       = $conn->getTableName('review');
-                // status_id 1 = Pending (Magento\Review\Model\Review::STATUS_PENDING)
                 $this->count = (int) $conn->fetchOne(
                     "SELECT COUNT(*) FROM `{$table}` WHERE status_id = 1"
                 );

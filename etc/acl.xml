@@ -4,6 +4,13 @@
  * ETechFlow_AdvancedProductReviews — ACL resources
  *
  * @author ETechFlow <etechflow0@gmail.com>
+ *
+ * v1.0.1 fix: Magento_Config::config must nest under
+ * Magento_Backend::admin -> Magento_Backend::stores -> Magento_Backend::stores_settings
+ * -> Magento_Config::config (4 levels), matching the canonical Magento path used
+ * by every other ETechFlow module. Re-opening it directly under admin caused
+ * "Duplicate key-sequence Magento_Config::config" + "title required" on
+ * Magento 2.4.9 strict ACL merge.
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -28,9 +35,14 @@
                                   title="Review Reminders" sortOrder="40"/>
                     </resource>
                 </resource>
-                <resource id="Magento_Config::config">
-                    <resource id="ETechFlow_AdvancedProductReviews::config"
-                              title="Advanced Product Reviews Configuration" sortOrder="100"/>
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="ETechFlow_AdvancedProductReviews::config"
+                                      title="Advanced Product Reviews Configuration"
+                                      sortOrder="100"/>
+                        </resource>
+                    </resource>
                 </resource>
             </resource>
         </resources>

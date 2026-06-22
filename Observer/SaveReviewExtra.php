@@ -1,9 +1,4 @@
 <?php
-/**
- * ETechFlow_AdvancedProductReviews
- *
- * @author ETechFlow <etechflow0@gmail.com>
- */
 declare(strict_types=1);
 
 namespace ETechFlow\AdvancedProductReviews\Observer;
@@ -21,26 +16,22 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
 use Psr\Log\LoggerInterface;
 
-/**
- * On review submission, persist the extra data (pros/cons, recommend,
- * verified-buyer flag) and any uploaded photos/videos.
- */
 class SaveReviewExtra implements ObserverInterface
 {
     private const MEDIA_FIELD = 'etf_media';
     private const MAX_FILES = 10;
 
     /**
-     * @param Request $request
-     * @param Config $config
-     * @param CustomerSession $customerSession
-     * @param ReviewExtraRepositoryInterface $extraRepository
-     * @param ReviewMediaFactory $mediaFactory
-     * @param ReviewMediaResource $mediaResource
-     * @param MediaUploader $mediaUploader
-     * @param VerifiedBuyer $verifiedBuyer
-     * @param LoggerInterface $logger
+     * Guards against infinite recursion. This observer is bound to
+     * review_save_after; the auto-approve save() below re-dispatches that
+     * same event, which would re-enter execute() and recurse until the call
+     * stack overflows (zend.max_allowed_stack_size). Each review is therefore
+     * processed at most once per request.
+     *
+     * @var array<int,bool>
      */
+    private static array $processed = [];
+
     public function __construct(
         private readonly Request $request,
         private readonly Config $config,
@@ -54,10 +45,6 @@ class SaveReviewExtra implements ObserverInterface
     ) {
     }
 
-    /**
-     * @param Observer $observer
-     * @return void
-     */
     public function execute(Observer $observer): void
     {
         if (!$this->config->isEnabled()) {
@@ -69,24 +56,36 @@ class SaveReviewExtra implements ObserverInterface
         if (!$review || !$review->getId()) {
             return;
         }
+
         $reviewId = (int) $review->getId();
 
+        // Re-entry guard: the auto-approve save() re-dispatches review_save_after,
+        // which calls this observer again. Without this, the second pass would
+        // save() once more and recurse infinitely. Bail on any re-entry so the
+        // extras/media are also processed exactly once.
+        if (isset(self::$processed[$reviewId])) {
+            return;
+        }
+        self::$processed[$reviewId] = true;
+
         try {
-            // Apply auto-approve logic if enabled
-            if ($this->config->isFlag(Config::XML_PATH_AUTO_APPROVE)) {
+            if ($this->config->isFlag(Config::XML_PATH_AUTO_APPROVE)
+                && (int) $review->getStatusId() !== Review::STATUS_APPROVED
+            ) {
                 $review->setStatusId(Review::STATUS_APPROVED)->save();
             }
+
             $extra = $this->extraRepository->getByReviewId($reviewId);
 
             if ($this->config->isFlag(Config::XML_PATH_ENABLE_PROS_CONS)) {
                 $extra->setPros($this->cleanText((string) $this->request->getParam('etf_pros')));
                 $extra->setCons($this->cleanText((string) $this->request->getParam('etf_cons')));
             }
+
             if ($this->config->isFlag(Config::XML_PATH_ENABLE_RECOMMEND)) {
                 $extra->setIsRecommended((bool) $this->request->getParam('etf_recommend'));
             }
 
-            // Verified buyer detection.
             $productId = (int) $review->getEntityPkValue();
             if ($this->customerSession->isLoggedIn()) {
                 $customerId = (int) $this->customerSession->getCustomerId();
@@ -97,15 +96,14 @@ class SaveReviewExtra implements ObserverInterface
 
             $this->saveMedia($reviewId);
         } catch (\Exception $e) {
-            // Never break the core review save flow because of our extras.
             $this->logger->error(
-                '[ETechFlow_AdvancedProductReviews] Failed saving review extras: ' . $e->getMessage()
+                sprintf('[ETechFlow] Failed saving review extras for review %d: %s', $reviewId, $e->getMessage())
             );
         }
     }
 
     /**
-     * Persist uploaded media files for the review.
+     * Store any uploaded photos/videos for the review.
      *
      * @param int $reviewId
      * @return void
@@ -113,89 +111,91 @@ class SaveReviewExtra implements ObserverInterface
     private function saveMedia(int $reviewId): void
     {
         $files = $this->request->getFiles()->toArray();
-        
-        // DEBUG: Log file upload attempt
-        $this->logger->info(
-            sprintf('[ETechFlow] SaveMedia called for review %d. Files received: %s', 
-                $reviewId, 
-                !empty($files[self::MEDIA_FIELD]) ? 'YES' : 'NO'
-            )
-        );
-        
-        if (empty($files[self::MEDIA_FIELD]['name'])) {
-            $this->logger->info('[ETechFlow] No media files to save - field empty');
+        $entries = $this->extractFileEntries($files[self::MEDIA_FIELD] ?? []);
+        if (empty($entries)) {
             return;
         }
-        
-        $names = $files[self::MEDIA_FIELD]['name'];
-        $names = is_array($names) ? $names : [$names];
+
         $sort = 0;
-
-        $this->logger->info(
-            sprintf('[ETechFlow] Processing %d file(s) for review %d', count($names), $reviewId)
-        );
-
-        foreach (array_keys($names) as $index) {
+        foreach ($entries as $index => $entry) {
             if ($sort >= self::MAX_FILES) {
                 break;
             }
-            if (($files[self::MEDIA_FIELD]['error'][$index] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-                $this->logger->info(
-                    sprintf('[ETechFlow] Skipping file %d - upload error code: %d', 
-                        $index, 
-                        $files[self::MEDIA_FIELD]['error'][$index] ?? UPLOAD_ERR_NO_FILE
-                    )
-                );
+            if (empty($entry['name'])) {
                 continue;
             }
+            if ((int) ($entry['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                continue;
+            }
+
             try {
-                $info = $this->mediaUploader->upload([self::MEDIA_FIELD, $index]);
+                // Magento's Uploader references a multi-file input by the string
+                // "field[index]" (an array fileId is treated as literal file data).
+                $info = $this->mediaUploader->upload(self::MEDIA_FIELD . '[' . $index . ']');
                 if ($info === null) {
-                    $this->logger->warning('[ETechFlow] MediaUploader returned null for index ' . $index);
                     continue;
                 }
-                
-                $this->logger->info(
-                    sprintf('[ETechFlow] File uploaded successfully: %s (type: %s)', 
-                        $info['file'], 
-                        $info['type']
-                    )
-                );
-                
+
                 $media = $this->mediaFactory->create();
                 $media->setReviewId($reviewId)
                     ->setMediaType($info['type'])
                     ->setData('file_path', $info['file'])
-                    ->setData('mime_type', $info['mime'])
+                    ->setData('mime_type', $info['mime'] ?? '')
                     ->setData('sort_order', $sort);
                 $this->mediaResource->save($media);
-                
-                $this->logger->info(
-                    sprintf('[ETechFlow] Media saved to DB with ID: %d', $media->getId())
-                );
-                
+
                 $sort++;
             } catch (\Exception $e) {
-                $this->logger->warning(
-                    '[ETechFlow_AdvancedProductReviews] Media upload skipped: ' . $e->getMessage()
-                );
+                $this->logger->error(sprintf(
+                    '[ETechFlow] Media upload failed for index %s: %s',
+                    $index,
+                    $e->getMessage()
+                ));
             }
         }
-        
-        $this->logger->info(
-            sprintf('[ETechFlow] SaveMedia completed. Total saved: %d files', $sort)
-        );
     }
 
     /**
-     * Trim and cap a pros/cons text blob.
+     * Normalize a $_FILES field to [index => ['name' => .., 'error' => ..]] for
+     * both the raw $_FILES layout and the per-index layout that Magento's
+     * Request::getFiles() (Laminas) produces for multi-file inputs
+     * (name="etf_media[]").
      *
-     * @param string $text
-     * @return string
+     * @param array $field
+     * @return array<int|string,array<string,mixed>>
      */
-    private function cleanText(string $text): string
+    private function extractFileEntries(array $field): array
     {
-        $text = trim($text);
-        return mb_substr($text, 0, 2000);
+        if (empty($field)) {
+            return [];
+        }
+        // Laminas-normalized multi-file: [0 => ['name'=>.., 'error'=>..], ...]
+        if (isset($field[0]) && is_array($field[0])) {
+            return $field;
+        }
+        // Raw $_FILES multi-file: ['name'=>[..], 'error'=>[..], ...]
+        if (isset($field['name']) && is_array($field['name'])) {
+            $out = [];
+            foreach (array_keys($field['name']) as $i) {
+                $out[$i] = [
+                    'name' => $field['name'][$i],
+                    'error' => $field['error'][$i] ?? UPLOAD_ERR_NO_FILE,
+                ];
+            }
+            return $out;
+        }
+        // Raw $_FILES single file: ['name'=>'x', 'error'=>0, ...]
+        if (isset($field['name'])) {
+            return [0 => ['name' => $field['name'], 'error' => $field['error'] ?? UPLOAD_ERR_NO_FILE]];
+        }
+        return [];
+    }
+
+    private function cleanText(?string $text): string
+    {
+        if (!$text) {
+            return '';
+        }
+        return trim(strip_tags($text));
     }
 }

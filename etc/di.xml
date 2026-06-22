@@ -87,6 +87,7 @@
             </argument>
         </arguments>
     </type>
+
     <!-- Admin notification: pending reviews awaiting approval -->
     <type name="Magento\AdminNotification\Model\System\MessageList">
         <arguments>

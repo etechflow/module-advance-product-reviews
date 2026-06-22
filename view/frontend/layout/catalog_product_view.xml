@@ -12,36 +12,27 @@
         <css src="ETechFlow_AdvancedProductReviews::css/reviews.css"/>
     </head>
     <body>
-        <!-- Inject our extra fields (pros/cons, recommend, photo/video) into the review form -->
-        <referenceContainer name="product.review.form.fields.before">
-            <block class="Magento\Framework\View\Element\Template"
-                   name="etechflow.review.form.fields"
-                   template="ETechFlow_AdvancedProductReviews::review/form-fields.phtml"
-                   ifconfig="etechflow_reviews/general/enabled">
-                <arguments>
-                    <argument name="etf_view_model" xsi:type="object">
-                        ETechFlow\AdvancedProductReviews\ViewModel\ReviewData
-                    </argument>
-                </arguments>
-            </block>
-        </referenceContainer>
-
-        <!-- Add a Questions & Answers tab to the product details -->
-        <referenceBlock name="product.info.details">
-            <block class="Magento\Framework\View\Element\Template"
-                   name="etechflow.qa.tab"
-                   as="etechflow_qa"
-                   group="detailed_info"
-                   template="ETechFlow_AdvancedProductReviews::qa/list.phtml"
-                   ifconfig="etechflow_reviews/elements/enable_qa">
-                <arguments>
-                    <argument name="title" translate="true" xsi:type="string">Questions &amp; Answers</argument>
-                    <argument name="sort_order" xsi:type="string">40</argument>
-                    <argument name="etf_view_model" xsi:type="object">
-                        ETechFlow\AdvancedProductReviews\ViewModel\ReviewData
-                    </argument>
-                </arguments>
-            </block>
+        <!-- Override the core review form to control field order and inline the
+             extra fields (pros/cons, recommend, photo/video). The ViewModel is
+             passed in so the template can read config flags. -->
+        <referenceBlock name="product.review.form"
+                        template="ETechFlow_AdvancedProductReviews::review/form.phtml">
+            <arguments>
+                <argument name="etf_view_model" xsi:type="object">
+                    ETechFlow\AdvancedProductReviews\ViewModel\ReviewData
+                </argument>
+            </arguments>
         </referenceBlock>
+
+        <!-- Hyvä (Tailwind + Alpine) reviews UI, driven by this module's GraphQL
+             API. The block self-detects the active theme and renders ONLY under
+             a Hyvä theme, so on Luma/standard themes it outputs nothing and the
+             standard review UI above is used instead. -->
+        <referenceContainer name="product.info.details">
+            <block class="ETechFlow\AdvancedProductReviews\Block\Hyva\ProductReviews"
+                   name="etf.hyva.product.reviews"
+                   template="ETechFlow_AdvancedProductReviews::hyva/review/reviews.phtml"
+                   after="-"/>
+        </referenceContainer>
     </body>
 </page>

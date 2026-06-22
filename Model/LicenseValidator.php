@@ -58,25 +58,21 @@ class LicenseValidator
     // ── HMAC — per-module (UNIQUE to delivery-date; do not reuse elsewhere) ──
     private const MODULE_ID = 'advanced-product-reviews';
 
-    // NOTE: Secret fragments are REDACTED in this published copy. Replace with
-    // the real per-module fragments before deploying (kept out of source control).
     private const SECRET_FRAGMENTS = [
-        'pL5vRm8kNqX2',
-        'tK9aZw3jFh7e',
-        'nU4cBg6sYp1d',
-        'xQ2mDs8rVt5j',
+        'eTF-APR-2026',
+        'u_bAjY_YVw',
+        '2t4QcELRRA',
+        't_UZmJczwA',
     ];
 
     // ── HMAC — shared bundle (MUST be identical in every eTechFlow module) ──
     private const BUNDLE_ID = 'etechflow-bundle';
 
-    // NOTE: Shared bundle secret is REDACTED in this published copy. Restore the
-    // real fragments (identical across all eTechFlow modules) before deploying.
     private const BUNDLE_SECRET_FRAGMENTS = [
-        'REDACTED-BUNDLE-FRAGMENT-1',
-        'REDACTED-BUNDLE-FRAGMENT-2',
-        'REDACTED-BUNDLE-FRAGMENT-3',
-        'REDACTED-BUNDLE-FRAGMENT-4',
+        'eTF-BUNDLE-2026',
+        'k2D9-mP4x',
+        'L8nR-vH2j',
+        'X7tY-zW5q',
     ];
 
     public function __construct(
@@ -95,12 +91,6 @@ class LicenseValidator
         $host = $this->getCurrentHost();
         if ($host === '') {
             return false;
-        }
-        if (!$this->isProductionEnvironment()) {
-            return true;
-        }
-        if ($this->isDevelopmentHost($host)) {
-            return true;
         }
         return $this->checkKey($host);
     }
@@ -144,6 +134,8 @@ class LicenseValidator
 
     public function isProductionEnvironment(): bool
     {
+        // Sandbox toggle removed: production licensing is always enforced.
+        return true;
         $value = $this->scopeConfig->getValue(self::XML_PATH_PRODUCTION_ENVIRONMENT, ScopeInterface::SCOPE_STORE);
         if ($value === null || $value === '') {
             return true;
@@ -180,6 +172,14 @@ class LicenseValidator
 
     private function checkKey(string $host): bool
     {
+        // Shared bundle key activates every eTechFlow module on this host,
+        // independent of the per-module key field. Checked first so a store can
+        // activate with ONLY the bundle key (per the config field's intent).
+        $bundleKey = $this->getConfiguredBundleKey();
+        if ($bundleKey !== '' && hash_equals($this->computeBundleKey($host), $bundleKey)) {
+            return true;
+        }
+
         $configuredKey = $this->getConfiguredKey();
         $isEmptyKey    = ($configuredKey === '');
 
@@ -210,11 +210,6 @@ class LicenseValidator
 
         // HMAC per-module key
         if ($configuredKey !== '' && hash_equals($this->computeKey($host), $configuredKey)) {
-            return true;
-        }
-        // Shared bundle key
-        $bundleKey = $this->getConfiguredBundleKey();
-        if ($bundleKey !== '' && hash_equals($this->computeBundleKey($host), $bundleKey)) {
             return true;
         }
         return false;

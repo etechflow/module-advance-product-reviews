@@ -36,14 +36,6 @@
              action="etechflow_reviews/comment/index"
              resource="ETechFlow_AdvancedProductReviews::comments"/>
 
-        <add id="ETechFlow_AdvancedProductReviews::questions"
-             title="Product Questions (Q&amp;A)"
-             translate="title"
-             module="ETechFlow_AdvancedProductReviews"
-             sortOrder="30"
-             parent="ETechFlow_AdvancedProductReviews::reviews"
-             action="etechflow_reviews/question/index"
-             resource="ETechFlow_AdvancedProductReviews::questions"/>
 
         <add id="ETechFlow_AdvancedProductReviews::reminders"
              title="Review Reminders"

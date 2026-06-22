@@ -1,0 +1,398 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — Hyvä (Tailwind + Alpine) reviews UI.
+ *
+ * The entire component is powered by the base module's GraphQL API
+ * (etfReviewSummary / etfProductReviews / etfProductQuestions + mutations),
+ * so this is a working example of the Phase 7 headless layer.
+ *
+ * Only renders under a Hyvä theme (see ProductReviews::isHyvaTheme); on Luma
+ * and other standard themes it returns early and outputs nothing.
+ *
+ * @var \ETechFlow\AdvancedProductReviews\Block\Hyva\ProductReviews $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+declare(strict_types=1);
+
+if (!$block->isHyvaTheme() || !$block->isModuleEnabled() || $block->getProductId() === 0) {
+    return;
+}
+
+$config = [
+    'productId' => $block->getProductId(),
+    'sku' => $block->getProductSku(),
+    'graphqlUrl' => $block->getGraphQlUrl(),
+    'storeCode' => $block->getStoreCode(),
+    'translation' => $block->isTranslationEnabled(),
+    'qa' => $block->isQaEnabled(),
+    'pageSize' => 5,
+];
+?>
+<section id="etf-reviews"
+         x-data="etfReviews(<?= $escaper->escapeHtmlAttr(json_encode($config)) ?>)"
+         x-init="init()"
+         class="etf-reviews max-w-5xl mx-auto py-8">
+
+    <h2 class="text-2xl font-semibold text-gray-900 mb-6"><?= $escaper->escapeHtml(__('Customer Reviews')) ?></h2>
+
+    <!-- ===== Summary ===== -->
+    <template x-if="summary && summary.review_count > 0">
+        <div class="grid md:grid-cols-3 gap-6 mb-8 p-6 bg-gray-50 rounded-lg border border-gray-100">
+            <div class="flex flex-col items-center justify-center text-center">
+                <span class="text-5xl font-bold text-gray-900" x-text="summary.average_rating.toFixed(1)"></span>
+                <div class="flex my-2" x-html="stars(summary.average_rating)"></div>
+                <span class="text-sm text-gray-500"
+                      x-text="summary.review_count + ' <?= $escaper->escapeJs(__('reviews')) ?>'"></span>
+            </div>
+            <div class="md:col-span-2 flex flex-col justify-center gap-1">
+                <template x-for="bucket in summary.rating_distribution" :key="bucket.rating">
+                    <button type="button" class="flex items-center gap-3 group"
+                            @click="setRating(filter.rating === bucket.rating ? null : bucket.rating)">
+                        <span class="w-12 text-sm text-gray-600 text-right"
+                              x-text="bucket.rating + ' <?= $escaper->escapeJs(__('star')) ?>'"></span>
+                        <span class="flex-1 h-2.5 bg-gray-200 rounded overflow-hidden">
+                            <span class="block h-full bg-yellow-400 transition-all"
+                                  :style="'width:' + bucket.percent + '%'"></span>
+                        </span>
+                        <span class="w-10 text-sm text-gray-500" x-text="bucket.count"></span>
+                    </button>
+                </template>
+                <div class="flex flex-wrap gap-4 mt-3 text-sm">
+                    <span class="text-green-700 font-medium"
+                          x-show="summary.recommend_percent > 0"
+                          x-text="summary.recommend_percent + '% <?= $escaper->escapeJs(__('recommend this')) ?>'"></span>
+                    <span class="text-blue-700 font-medium"
+                          x-show="summary.verified_count > 0"
+                          x-text="summary.verified_count + ' <?= $escaper->escapeJs(__('verified buyers')) ?>'"></span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ===== Toolbar: filters + sort ===== -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" @click="setRating(null)"
+                    :class="!filter.rating ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 border border-gray-300'"
+                    class="px-3 py-1.5 rounded text-sm"><?= $escaper->escapeHtml(__('All')) ?></button>
+            <button type="button" @click="toggleVerified()"
+                    :class="filter.verified_only ? 'bg-blue-700 text-white' : 'bg-white text-gray-700 border border-gray-300'"
+                    class="px-3 py-1.5 rounded text-sm"><?= $escaper->escapeHtml(__('Verified only')) ?></button>
+            <button type="button" @click="toggleMedia()"
+                    :class="filter.with_media ? 'bg-purple-700 text-white' : 'bg-white text-gray-700 border border-gray-300'"
+                    class="px-3 py-1.5 rounded text-sm"><?= $escaper->escapeHtml(__('With photos/videos')) ?></button>
+        </div>
+        <select x-model="sort" @change="reload()"
+                class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white">
+            <option value="RECENT"><?= $escaper->escapeHtml(__('Most recent')) ?></option>
+            <option value="OLDEST"><?= $escaper->escapeHtml(__('Oldest')) ?></option>
+            <option value="HELPFUL"><?= $escaper->escapeHtml(__('Most helpful')) ?></option>
+            <option value="HIGHEST_RATING"><?= $escaper->escapeHtml(__('Highest rated')) ?></option>
+            <option value="LOWEST_RATING"><?= $escaper->escapeHtml(__('Lowest rated')) ?></option>
+        </select>
+    </div>
+
+    <!-- ===== States ===== -->
+    <div x-show="loading" class="py-10 text-center text-gray-500"><?= $escaper->escapeHtml(__('Loading reviews…')) ?></div>
+    <div x-show="!loading && reviews.length === 0" class="py-10 text-center text-gray-500">
+        <?= $escaper->escapeHtml(__('No reviews yet. Be the first to review this product.')) ?>
+    </div>
+
+    <!-- ===== Review list ===== -->
+    <div class="space-y-5" x-show="!loading">
+        <template x-for="review in reviews" :key="review.review_id">
+            <article class="p-5 bg-white border border-gray-200 rounded-lg">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex" x-html="stars(review.rating)"></div>
+                            <span class="font-semibold text-gray-900" x-text="review.title"></span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                            <span x-text="review.nickname"></span>
+                            <span x-show="review.is_verified_buyer"
+                                  class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                                <?= $escaper->escapeHtml(__('Verified Buyer')) ?>
+                            </span>
+                            <span x-show="review.is_recommended"
+                                  class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                                <?= $escaper->escapeHtml(__('Recommends')) ?>
+                            </span>
+                        </div>
+                    </div>
+                    <time class="text-xs text-gray-400 whitespace-nowrap" x-text="formatDate(review.created_at)"></time>
+                </div>
+
+                <p class="mt-3 text-gray-700 whitespace-pre-line"
+                   x-text="review.showTranslation && review.translation ? review.translation.detail : review.detail"></p>
+
+                <!-- pros / cons -->
+                <div class="grid sm:grid-cols-2 gap-3 mt-3"
+                     x-show="(review.pros && review.pros.length) || (review.cons && review.cons.length)">
+                    <ul x-show="review.pros && review.pros.length" class="text-sm">
+                        <template x-for="(p, i) in (review.showTranslation && review.translation ? review.translation.pros : review.pros)" :key="i">
+                            <li class="flex gap-1.5 text-green-700"><span>＋</span><span x-text="p"></span></li>
+                        </template>
+                    </ul>
+                    <ul x-show="review.cons && review.cons.length" class="text-sm">
+                        <template x-for="(c, i) in (review.showTranslation && review.translation ? review.translation.cons : review.cons)" :key="i">
+                            <li class="flex gap-1.5 text-red-700"><span>－</span><span x-text="c"></span></li>
+                        </template>
+                    </ul>
+                </div>
+
+                <!-- media -->
+                <div class="flex flex-wrap gap-2 mt-3" x-show="review.media && review.media.length">
+                    <template x-for="m in review.media" :key="m.media_id">
+                        <a :href="m.url" target="_blank" rel="noopener"
+                           class="block w-20 h-20 rounded overflow-hidden bg-gray-100 border border-gray-200 relative">
+                            <img :src="m.media_type === 'video' ? (m.thumbnail_url || m.url) : m.url"
+                                 loading="lazy" alt="" class="w-full h-full object-cover">
+                            <span x-show="m.media_type === 'video'"
+                                  class="absolute inset-0 flex items-center justify-center text-white text-2xl bg-black/30">▶</span>
+                        </a>
+                    </template>
+                </div>
+
+                <!-- footer: helpful + translate -->
+                <div class="flex flex-wrap items-center gap-4 mt-4 pt-3 border-t border-gray-100 text-sm">
+                    <span class="text-gray-500"><?= $escaper->escapeHtml(__('Was this helpful?')) ?></span>
+                    <button type="button" @click="vote(review, true)" :disabled="review.voted"
+                            class="inline-flex items-center gap-1 text-gray-600 hover:text-green-700 disabled:opacity-50">
+                        👍 <span x-text="review.helpful_count"></span>
+                    </button>
+                    <button type="button" @click="vote(review, false)" :disabled="review.voted"
+                            class="inline-flex items-center gap-1 text-gray-600 hover:text-red-700 disabled:opacity-50">
+                        👎 <span x-text="review.not_helpful_count"></span>
+                    </button>
+                    <button type="button" x-show="config.translation" @click="translate(review)"
+                            class="ml-auto text-blue-600 hover:underline"
+                            x-text="review.showTranslation ? '<?= $escaper->escapeJs(__('Show original')) ?>' : '<?= $escaper->escapeJs(__('Translate')) ?>'"></button>
+                </div>
+
+                <!-- comments -->
+                <div class="mt-3 space-y-2 pl-4 border-l-2 border-gray-100" x-show="review.comments && review.comments.length">
+                    <template x-for="c in review.comments" :key="c.comment_id">
+                        <div class="text-sm">
+                            <span class="font-medium" :class="c.is_admin_reply ? 'text-blue-700' : 'text-gray-800'"
+                                  x-text="c.author_name + (c.is_admin_reply ? ' <?= $escaper->escapeJs(__('(Store)')) ?>' : '')"></span>
+                            <span class="text-gray-600" x-text="': ' + c.comment"></span>
+                        </div>
+                    </template>
+                </div>
+            </article>
+        </template>
+    </div>
+
+    <!-- ===== Pagination ===== -->
+    <div class="flex items-center justify-center gap-2 mt-6" x-show="pageInfo.total_pages > 1">
+        <button type="button" @click="goPage(pageInfo.current_page - 1)" :disabled="pageInfo.current_page <= 1"
+                class="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-40">‹</button>
+        <span class="text-sm text-gray-600"
+              x-text="pageInfo.current_page + ' / ' + pageInfo.total_pages"></span>
+        <button type="button" @click="goPage(pageInfo.current_page + 1)"
+                :disabled="pageInfo.current_page >= pageInfo.total_pages"
+                class="px-3 py-1.5 border border-gray-300 rounded text-sm disabled:opacity-40">›</button>
+    </div>
+
+    <!-- ===== Q&A ===== -->
+    <div class="mt-12" x-show="config.qa">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4"><?= $escaper->escapeHtml(__('Questions & Answers')) ?></h3>
+        <div class="space-y-4">
+            <template x-for="q in questions" :key="q.question_id">
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <p class="font-medium text-gray-900"><span class="text-gray-400 mr-1">Q:</span><span x-text="q.question"></span></p>
+                    <template x-for="a in q.answers" :key="a.answer_id">
+                        <p class="mt-2 text-gray-700 pl-4">
+                            <span class="text-gray-400 mr-1">A:</span><span x-text="a.answer"></span>
+                            <span x-show="a.is_admin" class="ml-1 text-xs text-blue-700"><?= $escaper->escapeHtml(__('(Store)')) ?></span>
+                        </p>
+                    </template>
+                </div>
+            </template>
+            <p x-show="questions.length === 0" class="text-gray-500 text-sm"><?= $escaper->escapeHtml(__('No questions yet.')) ?></p>
+        </div>
+
+        <form @submit.prevent="submitQuestion()" class="mt-4 flex flex-col sm:flex-row gap-2">
+            <input type="text" x-model="newQuestion" required
+                   placeholder="<?= $escaper->escapeHtmlAttr(__('Ask a question about this product…')) ?>"
+                   class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
+            <button type="submit" :disabled="submitting"
+                    class="px-4 py-2 bg-gray-900 text-white rounded text-sm disabled:opacity-50">
+                <?= $escaper->escapeHtml(__('Submit')) ?>
+            </button>
+        </form>
+        <p x-show="notice" x-text="notice" class="mt-2 text-sm text-green-700"></p>
+    </div>
+</section>
+
+<script>
+    function etfReviews(config) {
+        return {
+            config: config,
+            summary: null,
+            reviews: [],
+            questions: [],
+            pageInfo: {current_page: 1, page_size: config.pageSize, total_pages: 1},
+            filter: {rating: null, verified_only: false, with_media: false},
+            sort: 'RECENT',
+            loading: true,
+            submitting: false,
+            newQuestion: '',
+            notice: '',
+
+            async init() {
+                await this.loadAll();
+            },
+
+            async gql(query, variables) {
+                const res = await fetch(this.config.graphqlUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Store': this.config.storeCode},
+                    credentials: 'include',
+                    body: JSON.stringify({query: query, variables: variables})
+                });
+                const json = await res.json();
+                if (json.errors && json.errors.length) {
+                    throw new Error(json.errors[0].message);
+                }
+                return json.data;
+            },
+
+            filterVars() {
+                const f = {};
+                if (this.filter.rating) f.rating = this.filter.rating;
+                if (this.filter.verified_only) f.verified_only = true;
+                if (this.filter.with_media) f.with_media = true;
+                return f;
+            },
+
+            async loadAll() {
+                this.loading = true;
+                const query = `query Q($sku:String,$ps:Int,$cp:Int,$sort:EtfReviewSort,$filter:EtfReviewFilterInput){
+                    etfReviewSummary(sku:$sku){product_id review_count average_rating recommend_percent verified_count with_media_count rating_distribution{rating count percent}}
+                    etfProductReviews(sku:$sku,pageSize:$ps,currentPage:$cp,sort:$sort,filter:$filter){ ${this.reviewFields()} }
+                    etfProductQuestions(sku:$sku){items{question_id author_name question helpful_count created_at answers{answer_id author_name answer is_admin helpful_count created_at}}}
+                }`;
+                try {
+                    const d = await this.gql(query, {
+                        sku: this.config.sku, ps: this.config.pageSize, cp: 1,
+                        sort: this.sort, filter: this.filterVars()
+                    });
+                    this.summary = d.etfReviewSummary;
+                    this.applyReviews(d.etfProductReviews);
+                    this.questions = (d.etfProductQuestions && d.etfProductQuestions.items) || [];
+                } catch (e) {
+                    console.error('[ETechFlow Reviews]', e);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            reviewFields() {
+                return `total_count
+                    page_info{current_page page_size total_pages}
+                    items{review_id title detail nickname rating created_at pros cons is_recommended is_verified_buyer helpful_count not_helpful_count original_language
+                        media{media_id media_type url thumbnail_url}
+                        comments{comment_id author_name comment is_admin_reply created_at}}`;
+            },
+
+            applyReviews(payload) {
+                this.pageInfo = payload.page_info;
+                this.reviews = payload.items.map(r => ({...r, voted: false, showTranslation: false, translation: null}));
+            },
+
+            async loadReviews(page) {
+                this.loading = true;
+                const query = `query Q($sku:String,$ps:Int,$cp:Int,$sort:EtfReviewSort,$filter:EtfReviewFilterInput){
+                    etfProductReviews(sku:$sku,pageSize:$ps,currentPage:$cp,sort:$sort,filter:$filter){ ${this.reviewFields()} }
+                }`;
+                try {
+                    const d = await this.gql(query, {
+                        sku: this.config.sku, ps: this.config.pageSize, cp: page || 1,
+                        sort: this.sort, filter: this.filterVars()
+                    });
+                    this.applyReviews(d.etfProductReviews);
+                    document.getElementById('etf-reviews').scrollIntoView({behavior: 'smooth', block: 'start'});
+                } catch (e) {
+                    console.error('[ETechFlow Reviews]', e);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            reload() { this.loadReviews(1); },
+            setRating(r) { this.filter.rating = r; this.reload(); },
+            toggleVerified() { this.filter.verified_only = !this.filter.verified_only; this.reload(); },
+            toggleMedia() { this.filter.with_media = !this.filter.with_media; this.reload(); },
+            goPage(p) { if (p >= 1 && p <= this.pageInfo.total_pages) this.loadReviews(p); },
+
+            async vote(review, helpful) {
+                if (review.voted) return;
+                review.voted = true;
+                const m = `mutation($id:Int!,$h:Boolean!){etfVoteReviewHelpful(input:{review_id:$id,helpful:$h}){success message helpful_count not_helpful_count}}`;
+                try {
+                    const d = await this.gql(m, {id: review.review_id, h: helpful});
+                    const r = d.etfVoteReviewHelpful;
+                    if (r.success) {
+                        review.helpful_count = r.helpful_count;
+                        review.not_helpful_count = r.not_helpful_count;
+                    } else {
+                        review.voted = false;
+                    }
+                } catch (e) {
+                    review.voted = false;
+                    console.error('[ETechFlow Reviews]', e);
+                }
+            },
+
+            async translate(review) {
+                if (review.translation) { review.showTranslation = !review.showTranslation; return; }
+                const m = `mutation($id:Int!,$lang:String!){etfTranslateReview(input:{review_id:$id,language:$lang}){success message language title detail pros cons}}`;
+                try {
+                    const d = await this.gql(m, {id: review.review_id, lang: navigator.language.slice(0,2)});
+                    const r = d.etfTranslateReview;
+                    if (r.success) {
+                        review.translation = r;
+                        review.showTranslation = true;
+                    }
+                } catch (e) {
+                    console.error('[ETechFlow Reviews]', e);
+                }
+            },
+
+            async submitQuestion() {
+                if (!this.newQuestion.trim()) return;
+                this.submitting = true;
+                this.notice = '';
+                const m = `mutation($sku:String,$q:String!){etfAskProductQuestion(input:{sku:$sku,question:$q}){success message}}`;
+                try {
+                    const d = await this.gql(m, {sku: this.config.sku, q: this.newQuestion.trim()});
+                    const r = d.etfAskProductQuestion;
+                    this.notice = r.message;
+                    if (r.success) this.newQuestion = '';
+                } catch (e) {
+                    this.notice = e.message;
+                } finally {
+                    this.submitting = false;
+                }
+            },
+
+            stars(rating) {
+                let html = '';
+                const full = Math.round(rating);
+                for (let i = 1; i <= 5; i++) {
+                    const color = i <= full ? '#facc15' : '#d1d5db';
+                    html += `<svg class="w-4 h-4" fill="${color}" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.36 4.18a1 1 0 00.95.69h4.4c.97 0 1.37 1.24.59 1.81l-3.56 2.59a1 1 0 00-.36 1.12l1.36 4.18c.3.92-.75 1.69-1.54 1.12l-3.56-2.59a1 1 0 00-1.18 0l-3.56 2.59c-.78.57-1.83-.2-1.54-1.12l1.36-4.18a1 1 0 00-.36-1.12L1.4 9.61c-.78-.57-.38-1.81.59-1.81h4.4a1 1 0 00.95-.69L9.05 2.93z"/></svg>`;
+                }
+                return html;
+            },
+
+            formatDate(s) {
+                if (!s) return '';
+                const d = new Date(s.replace(' ', 'T'));
+                return isNaN(d) ? s : d.toLocaleDateString();
+            }
+        };
+    }
+</script>

@@ -1,0 +1,77 @@
+<?php
+/**
+ * ETechFlow_AdvancedProductReviews — reviews widget
+ *
+ * @var \ETechFlow\AdvancedProductReviews\Block\Widget\Reviews $block
+ * @var \Magento\Framework\Escaper $escaper
+ * @author ETechFlow <etechflow0@gmail.com>
+ */
+
+if (!$block->isModuleEnabled()) {
+    return;
+}
+$items = $block->getReviewItems();
+if (!$items) {
+    return;
+}
+$heading = $block->getHeading();
+?>
+<div class="etf-reviews-widget">
+    <style>
+        /* The "before footer" (page.bottom) container is a flex item with auto
+           side-margins inside Luma's flex-column .page-wrapper, so it shrinks to
+           its content width. Force it to fill the content width instead. */
+        .page-wrapper > .page-bottom{width:100%}
+        .etf-reviews-widget{margin:20px 0;width:100%;box-sizing:border-box}
+        .etf-reviews-widget .etf-rw-title{font-size:1.6rem;font-weight:600;margin:0 0 14px}
+        .etf-reviews-widget .etf-rw-list{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+        .etf-reviews-widget .etf-rw-item{border:1px solid #e5e5e5;border-radius:8px;padding:12px 16px;background:#fff}
+        .etf-reviews-widget .etf-rw-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+        .etf-reviews-widget .etf-rw-author{font-weight:600}
+        .etf-reviews-widget .etf-rw-date{color:#888;font-size:.85rem}
+        .etf-reviews-widget .etf-rw-stars{color:#f0a020;letter-spacing:2px;font-size:1.15rem;line-height:1.4}
+        .etf-reviews-widget .etf-rw-summary{font-weight:600;margin:6px 0 2px}
+        .etf-reviews-widget .etf-rw-text{color:#333}
+        .etf-reviews-widget .etf-rw-product{font-size:.85rem;margin-top:8px;color:#555}
+    </style>
+
+    <?php if ($heading !== ''): ?>
+        <p class="etf-rw-title"><?= $escaper->escapeHtml($heading) ?></p>
+    <?php endif; ?>
+
+    <div class="etf-rw-list">
+        <?php foreach ($items as $item): ?>
+            <div class="etf-rw-item">
+                <div class="etf-rw-head">
+                    <span class="etf-rw-author"><?= $escaper->escapeHtml($item['nickname'] !== '' ? $item['nickname'] : __('Anonymous')) ?></span>
+                    <?php if ($item['date'] !== ''): ?>
+                        <span class="etf-rw-date"><?= $escaper->escapeHtml($item['date']) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="etf-rw-stars" title="<?= $escaper->escapeHtmlAttr(__('%1 out of 5', $item['stars'])) ?>">
+                    <?php for ($i = 1; $i <= 5; $i++): ?><?= $i <= $item['stars'] ? '★' : '☆' ?><?php endfor; ?>
+                </div>
+
+                <?php if ($item['title'] !== ''): ?>
+                    <div class="etf-rw-summary"><?= $escaper->escapeHtml($item['title']) ?></div>
+                <?php endif; ?>
+
+                <?php if ($item['detail'] !== ''): ?>
+                    <div class="etf-rw-text"><?= $escaper->escapeHtml($item['detail']) ?></div>
+                <?php endif; ?>
+
+                <?php if ($item['product_name'] !== ''): ?>
+                    <div class="etf-rw-product">
+                        <?= $escaper->escapeHtml(__('On:')) ?>
+                        <?php if ($item['product_url'] !== ''): ?>
+                            <a href="<?= $escaper->escapeUrl($item['product_url']) ?>"><?= $escaper->escapeHtml($item['product_name']) ?></a>
+                        <?php else: ?>
+                            <?= $escaper->escapeHtml($item['product_name']) ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>

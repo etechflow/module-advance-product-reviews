@@ -9,6 +9,9 @@
 
 /** @var \ETechFlow\AdvancedProductReviews\ViewModel\ReviewData $vm */
 $vm = $block->getEtfViewModel();
+if (!$vm || !$vm->isEnabled()) {
+    return;
+}
 $items = $block->getReviewsCollection()->getItems();
 $format = $block->getDateFormat() ?: \IntlDateFormatter::SHORT;
 
@@ -69,6 +72,12 @@ $recommendRate = $total ? round(($recommendCount / $total) * 100) : 0;
                 </div>
             <?php endif; ?>
         </div>
+        <div class="etf-write-review-cta">
+            <button type="button" class="action primary etf-write-review-btn" data-role="etf-write-review">
+                <span><?= $escaper->escapeHtml(__('Write a review')) ?></span>
+            </button>
+            <span class="etf-write-review-hint"><?= $escaper->escapeHtml(__('Share your thoughts with other customers')) ?></span>
+        </div>
     </div>
 
     <!-- ===================== FILTERS ===================== -->
@@ -98,22 +107,6 @@ $recommendRate = $total ? round(($recommendCount / $total) * 100) : 0;
             $rid = (int) $review->getReviewId();
             $extra = $extraMap[$rid] ?? null;
             $media = $mediaMap[$rid] ?? [];
-            
-            // === DEBUG: Temporary diagnostic output ===
-            // Remove this block after debugging
-            if (false) { // Change to true to enable debug output
-                echo "<!-- DEBUG Review #{$rid}: ";
-                echo "Media count = " . count($media) . "; ";
-                if (!empty($media)) {
-                    foreach ($media as $m) {
-                        echo "Type=" . $m->getMediaType() . ", ";
-                        echo "Path=" . $m->getFilePath() . "; ";
-                    }
-                }
-                echo " -->\n";
-            }
-            // === END DEBUG ===
-            
             $isRecommended = $extra && $extra->getIsRecommended();
             $isVerified = $extra && $extra->getIsVerifiedBuyer();
             $hasMedia = !empty($media);

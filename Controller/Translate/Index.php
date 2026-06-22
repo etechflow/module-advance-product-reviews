@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace ETechFlow\AdvancedProductReviews\Controller\Translate;
 
+use ETechFlow\AdvancedProductReviews\Model\Config;
 use ETechFlow\AdvancedProductReviews\Model\Service\TranslationService;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
@@ -34,6 +35,7 @@ class Index implements HttpPostActionInterface
     public function __construct(
         private readonly RequestInterface $request,
         private readonly JsonFactory $resultJsonFactory,
+        private readonly Config $config,
         private readonly TranslationService $translationService,
         private readonly StoreManagerInterface $storeManager,
         private readonly LoggerInterface $logger
@@ -47,6 +49,9 @@ class Index implements HttpPostActionInterface
     {
         $result = $this->resultJsonFactory->create();
         try {
+            if (!$this->config->isEnabled()) {
+                throw new LocalizedException(__('Reviews are unavailable.'));
+            }
             $reviewId = (int) $this->request->getParam('review_id');
             $storeId = (int) $this->storeManager->getStore()->getId();
 

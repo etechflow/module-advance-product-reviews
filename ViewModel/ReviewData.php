@@ -125,6 +125,38 @@ class ReviewData implements ArgumentInterface
     }
 
     /**
+     * Whether guests are allowed to submit reviews.
+     *
+     * @return bool
+     */
+    public function isGuestReviewsAllowed(): bool
+    {
+        return $this->config->isGuestReviewsAllowed();
+    }
+
+    /**
+     * Whether a purchase is required before a review can be submitted.
+     *
+     * @return bool
+     */
+    public function isPurchaseRequired(): bool
+    {
+        return $this->config->isPurchaseRequired();
+    }
+
+    /**
+     * Whether the current visitor is permitted to see/use the review form,
+     * given the guest policy. (Purchase verification itself is enforced
+     * server-side on submit.)
+     *
+     * @return bool
+     */
+    public function canCurrentVisitorReview(): bool
+    {
+        return $this->isLoggedIn() || $this->isGuestReviewsAllowed();
+    }
+
+    /**
      * Extra data (pros/cons, recommend, verified, helpful counts) for a review.
      *
      * @param int $reviewId

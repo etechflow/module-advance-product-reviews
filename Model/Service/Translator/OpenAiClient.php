@@ -9,14 +9,13 @@ declare(strict_types=1);
 namespace ETechFlow\AdvancedProductReviews\Model\Service\Translator;
 
 /**
- * Translation client for the Anthropic (Claude) Messages API.
+ * Translation client for the OpenAI Chat Completions API.
  *
- * @see https://docs.anthropic.com/en/api/messages
+ * @see https://platform.openai.com/docs/api-reference/chat
  */
-class ClaudeClient extends AbstractTranslator
+class OpenAiClient extends AbstractTranslator
 {
-    private const API_ENDPOINT = 'https://api.anthropic.com/v1/messages';
-    private const API_VERSION = '2023-06-01';
+    private const API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 
     /**
      * @inheritDoc
@@ -25,9 +24,11 @@ class ClaudeClient extends AbstractTranslator
     {
         $payload = [
             'model' => $model,
+            'temperature' => 0.2,
             'max_tokens' => self::MAX_TOKENS,
-            'system' => $this->buildSystemPrompt($targetLanguage),
+            'response_format' => ['type' => 'json_object'],
             'messages' => [
+                ['role' => 'system', 'content' => $this->buildSystemPrompt($targetLanguage)],
                 ['role' => 'user', 'content' => $this->json->serialize($fields)],
             ],
         ];
@@ -35,20 +36,13 @@ class ClaudeClient extends AbstractTranslator
         $response = $this->request(
             self::API_ENDPOINT,
             [
-                'content-type' => 'application/json',
-                'x-api-key' => $apiKey,
-                'anthropic-version' => self::API_VERSION,
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $apiKey,
             ],
             $payload
         );
 
-        $text = '';
-        foreach ($response['content'] ?? [] as $block) {
-            if (($block['type'] ?? '') === 'text') {
-                $text .= $block['text'] ?? '';
-            }
-        }
-        return $text;
+        return (string) ($response['choices'][0]['message']['content'] ?? '');
     }
 
     /**
@@ -56,6 +50,6 @@ class ClaudeClient extends AbstractTranslator
      */
     protected function getProviderLabel(): string
     {
-        return 'Anthropic';
+        return 'OpenAI';
     }
 }
