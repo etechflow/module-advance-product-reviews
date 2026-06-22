@@ -1,12 +1,25 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- License gate: lock all module admin screens when the licence is invalid
+         (suspended / expired / IP-blocked / missing). Route-level predispatch so
+         it fires on every etechflow_reviews/* admin action; the observer self-
+         excludes the licence pages to avoid a redirect loop. -->
+    <event name="controller_action_predispatch_etechflow_reviews">
+        <observer name="etechflow_apr_license_gate"
+                  instance="ETechFlow\AdvancedProductReviews\Observer\EnforceLicenseGate"/>
+    </event>
+    <!-- In-admin update notifications (bell + dedup) on the module's pages and the config page. -->
     <event name="controller_action_predispatch_etechflow_reviews_comment_index">
         <observer name="etechflow_apr_update_notification"
                   instance="ETechFlow\AdvancedProductReviews\Observer\AddUpdateNotification"/>
     </event>
     <event name="controller_action_predispatch_etechflow_reviews_analytics_index">
         <observer name="etechflow_apr_update_notification_analytics"
+                  instance="ETechFlow\AdvancedProductReviews\Observer\AddUpdateNotification"/>
+    </event>
+    <event name="controller_action_predispatch_adminhtml_system_config_edit">
+        <observer name="etechflow_apr_update_notification_sysconfig"
                   instance="ETechFlow\AdvancedProductReviews\Observer\AddUpdateNotification"/>
     </event>
 </config>
