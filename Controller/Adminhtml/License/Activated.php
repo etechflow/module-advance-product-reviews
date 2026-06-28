@@ -20,9 +20,9 @@ use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\View\Result\PageFactory;
 
 /**
- * Landing page after payment. The buyer returns here from the webstore Paddle
+ * Landing page after payment. The buyer returns here from the webstore Stripe
  * checkout (module.etechflow.com) carrying the broker session id; we ask the
- * broker for the issued SP-XXXX key (it only returns one once Paddle has
+ * broker for the issued SP-XXXX key (it only returns one once Stripe has
  * confirmed payment), save it to config, and show the success page. Same shape
  * as the prior Stripe success -> portal activate flow; only the rail changed.
  */
